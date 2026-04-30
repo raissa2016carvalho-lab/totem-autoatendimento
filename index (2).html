@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TotEm — Autoatendimento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --orange: #ff6b2b;
+      --orange-dark: #d94f15;
+      --orange-glow: rgba(255,107,43,0.15);
+      --bg: #0f0e0d;
+      --surface: #1a1917;
+      --card: #222120;
+      --border: #2e2c29;
+      --border2: #3d3a36;
+      --cream: #f5f0e8;
+      --muted: #7a7570;
+      --muted2: #5a5550;
+      --green: #2ecc71;
+      --red: #e74c3c;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--cream);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    /* ── NAV ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px; border-bottom: 1px solid var(--border);
+      background: rgba(15,14,13,0.95); backdrop-filter: blur(8px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px;
+      letter-spacing: -0.5px; display: flex; align-items: center; gap: 6px;
+    }
+    .logo-dot { color: var(--orange); }
+    .nav-tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; }
+    .nav-tab {
+      padding: 8px 18px; border-radius: 7px; border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      background: transparent; color: var(--muted); transition: all 0.2s;
+    }
+    .nav-tab.active { background: var(--orange); color: #fff; }
+    .nav-tab:hover:not(.active) { color: var(--cream); }
+
+    /* ── VIEWS ── */
+    .view { display: none; flex: 1; }
+    .view.active { display: flex; flex-direction: column; flex: 1; }
+
+    /* ════════════════════════════════
+       ADMIN
+    ════════════════════════════════ */
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      flex: 1;
+      height: calc(100vh - 57px);
+    }
+
+    .admin-sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--card); border: 1px solid var(--border2); color: var(--cream);
+      border-radius: 8px; padding: 9px 11px; font-size: 13px;
+      font-family: 'DM Sans', sans-serif; outline: none; transition: border 0.2s; width: 100%;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--orange); }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .form-group select option { background: #1a1917; }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .btn-primary {
+      background: var(--orange); color: #fff; border: none; border-radius: 9px;
+      padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s; width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-primary:hover { background: var(--orange-dark); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .cat-row { display: flex; gap: 8px; }
+    .cat-row input { flex: 1; }
+    .btn-icon {
+      background: var(--orange); border: none; color: #fff; border-radius: 8px;
+      padding: 9px 13px; cursor: pointer; font-size: 16px; font-weight: 600;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    .btn-icon:hover { background: var(--orange-dark); }
+
+    .cat-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cat-chip {
+      background: var(--card); border: 1px solid var(--border2); color: var(--cream);
+      border-radius: 20px; padding: 4px 10px; font-size: 12px; font-weight: 500;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .chip-del {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 13px; padding: 0; line-height: 1; transition: color 0.2s;
+    }
+    .chip-del:hover { color: var(--red); }
+
+    .divider { border: none; border-top: 1px solid var(--border); }
+
+    /* MAIN */
+    .admin-main { padding: 24px; overflow-y: auto; }
+    .main-header {
+      display: flex; align-items: baseline; gap: 10px; margin-bottom: 22px;
+    }
+    .main-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; }
+    .main-header span { color: var(--muted); font-size: 14px; }
+
+    .cat-section { margin-bottom: 30px; }
+    .cat-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .cat-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+    .cat-count {
+      background: var(--card); color: var(--muted); border-radius: 20px;
+      padding: 2px 8px; font-size: 11px; font-weight: 500;
+    }
+
+    .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+
+    .item-card {
+      background: var(--card); border-radius: 12px; padding: 14px;
+      border: 1px solid var(--border); position: relative; transition: border-color 0.2s;
+    }
+    .item-card:hover { border-color: var(--border2); }
+    .item-emoji { font-size: 28px; margin-bottom: 8px; }
+    .item-name { font-weight: 600; font-size: 14px; margin-bottom: 3px; line-height: 1.3; }
+    .item-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.4; min-height: 32px; }
+    .item-footer { display: flex; align-items: center; justify-content: space-between; }
+    .item-price { color: var(--orange); font-weight: 700; font-size: 15px; font-family: 'Syne', sans-serif; }
+    .btn-del {
+      background: none; border: none; color: var(--muted2); cursor: pointer;
+      font-size: 14px; padding: 4px; transition: color 0.2s;
+    }
+    .btn-del:hover { color: var(--red); }
+    .badge {
+      position: absolute; top: 10px; right: 10px;
+      font-size: 10px; border-radius: 5px; padding: 2px 6px; font-weight: 600;
+    }
+    .badge-on { background: rgba(46,204,113,0.15); color: var(--green); }
+    .badge-off { background: rgba(231,76,60,0.15); color: var(--red); }
+
+    .empty {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .empty-icon { font-size: 48px; opacity: 0.3; }
+    .empty p { font-size: 14px; }
+
+    /* ════════════════════════════════
+       TOTEM
+    ════════════════════════════════ */
+    .totem-outer {
+      flex: 1; display: flex; justify-content: center; align-items: flex-start;
+      padding: 28px 20px; background: var(--bg);
+      background-image: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,107,43,0.06) 0%, transparent 70%);
+    }
+
+    .totem {
+      width: 400px; background: var(--surface); border-radius: 24px;
+      border: 1.5px solid var(--border); display: flex; flex-direction: column;
+      overflow: hidden; max-height: calc(100vh - 110px);
+      box-shadow: 0 0 80px rgba(255,107,43,0.07), 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .totem-hero {
+      background: var(--orange); padding: 22px 20px 18px;
+    }
+    .totem-rest-name {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: #fff;
+    }
+    .totem-tagline { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 3px; }
+
+    .totem-cats-bar {
+      display: flex; gap: 8px; padding: 12px 16px; overflow-x: auto;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .totem-cats-bar::-webkit-scrollbar { display: none; }
+    .tcat {
+      white-space: nowrap; padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--border2); background: transparent; color: var(--muted);
+      font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: all 0.18s;
+    }
+    .tcat.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .tcat:hover:not(.active) { color: var(--cream); border-color: var(--muted2); }
+
+    .totem-items { overflow-y: auto; padding: 12px; flex: 1; }
+
+    .tmenu-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px;
+      border-radius: 12px; margin-bottom: 8px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--card); transition: all 0.18s;
+    }
+    .tmenu-item:hover { border-color: var(--border2); background: #2a2826; }
+    .tmenu-item.in-cart { border-color: var(--orange); }
+    .titem-emoji { font-size: 32px; flex-shrink: 0; width: 44px; text-align: center; }
+    .titem-info { flex: 1; min-width: 0; }
+    .titem-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .titem-desc { font-size: 12px; color: var(--muted); line-height: 1.35; }
+    .titem-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+    .titem-price { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--orange); }
+    .qty-ctrl { display: flex; align-items: center; gap: 6px; }
+    .qty-btn {
+      width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border2);
+      background: var(--card); color: var(--cream); font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+      font-weight: 600; line-height: 1;
+    }
+    .qty-btn:hover { background: var(--orange); border-color: var(--orange); }
+    .qty-num { font-size: 14px; font-weight: 600; min-width: 16px; text-align: center; }
+
+    /* CART BAR */
+    .cart-bar {
+      border-top: 1px solid var(--border); padding: 14px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface); flex-shrink: 0;
+    }
+    .cart-info { display: flex; flex-direction: column; gap: 2px; }
+    .cart-items-count { font-size: 12px; color: var(--muted); }
+    .cart-total { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
+    .btn-checkout {
+      background: var(--orange); color: #fff; border: none; border-radius: 10px;
+      padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-checkout:hover { background: var(--orange-dark); }
+    .btn-checkout:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      display: none; align-items: center; justify-content: center; z-index: 200;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: 20px; padding: 28px;
+      width: 360px; border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.92) translateY(16px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal h3 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .modal p { color: var(--muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+    .order-summary { background: var(--card); border-radius: 10px; padding: 14px; margin-bottom: 20px; }
+    .order-line {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .order-line:last-child { border-bottom: none; }
+    .order-line .name { color: var(--cream); }
+    .order-line .val { color: var(--muted); }
+    .order-total-line {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+    }
+    .order-total-line .label { font-weight: 600; font-size: 14px; }
+    .order-total-line .amount { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; color: var(--orange); }
+    .modal-btns { display: flex; gap: 10px; }
+    .btn-cancel {
+      flex: 1; background: var(--card); border: 1px solid var(--border2); color: var(--cream);
+      border-radius: 9px; padding: 10px; font-size: 14px; font-weight: 500;
+      cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
+    }
+    .btn-cancel:hover { background: var(--border2); }
+    .modal .btn-primary { flex: 2; }
+
+    /* SUCCESS */
+    .success-screen {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 20px; text-align: center; flex: 1;
+    }
+    .success-screen.show { display: flex; }
+    .success-icon { font-size: 64px; margin-bottom: 16px; }
+    .success-screen h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .success-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 260px; }
+    .order-code {
+      background: var(--card); border: 1px solid var(--orange); border-radius: 12px;
+      padding: 12px 24px; margin: 20px 0; font-family: 'Syne', sans-serif;
+      font-size: 28px; font-weight: 800; color: var(--orange); letter-spacing: 4px;
+    }
+    .btn-novo {
+      background: transparent; border: 1px solid var(--border2); color: var(--muted);
+      border-radius: 9px; padding: 10px 20px; font-size: 13px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-top: 8px;
+    }
+    .btn-novo:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── TOTEM CATEGORY SCREEN ── */
+    .tscreen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .tscreen.active { display: flex; }
+
+    .tcat-screen { padding: 16px; overflow-y: auto; }
+    .tcat-greeting {
+      font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .tcat-hint { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+    .tcat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .tcat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px 14px; cursor: pointer; transition: all 0.18s;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      text-align: center;
+    }
+    .tcat-card:hover { border-color: var(--orange); background: #2a2826; transform: scale(1.02); }
+    .tcat-card:active { transform: scale(0.97); }
+    .tcat-card-emoji { font-size: 38px; }
+    .tcat-card-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; line-height: 1.2; }
+    .tcat-card-count { font-size: 11px; color: var(--muted); }
+
+    /* ── TOTEM ITEMS SCREEN ── */
+    .titems-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .btn-back {
+      background: var(--card); border: 1px solid var(--border2); color: var(--cream);
+      border-radius: 8px; padding: 7px 12px; font-size: 13px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-back:hover { border-color: var(--orange); color: var(--orange); }
+    .titems-cat-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--cream); padding: 10px 18px; border-radius: 10px; font-size: 13px;
+      z-index: 300; transition: transform 0.3s ease; white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── PHOTO UPLOAD ── */
+    .upload-zone {
+      border: 1.5px dashed var(--border2); border-radius: 10px;
+      padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .upload-zone:hover { border-color: var(--orange); background: rgba(255,107,43,0.04); }
+    .upload-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-zone.has-img { padding: 0; border-style: solid; border-color: var(--border2); }
+    .upload-preview {
+      width: 100%; height: 130px; object-fit: cover; border-radius: 8px; display: block;
+    }
+    .upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; }
+    .upload-icon { font-size: 24px; }
+    .upload-label { font-size: 12px; color: var(--muted); }
+    .upload-hint { font-size: 11px; color: var(--muted2); }
+    .upload-change {
+      position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.65);
+      color: #fff; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px;
+      cursor: pointer; z-index: 2; pointer-events: none;
+    }
+
+    /* item card with photo */
+    .item-thumb {
+      width: 100%; height: 100px; object-fit: cover;
+      border-radius: 8px; margin-bottom: 8px; display: block;
+    }
+
+    /* totem item with photo */
+    .titem-thumb {
+      width: 56px; height: 56px; object-fit: cover;
+      border-radius: 10px; flex-shrink: 0;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 700px) {
+      .admin-layout { grid-template-columns: 1fr; height: auto; }
+      .admin-sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: 60vh; }
+      nav { padding: 12px 16px; }
+      .logo span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Tot<span class="logo-dot">E</span>m</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchView('admin')">⚙ Cardápio</button>
+    <button class="nav-tab" onclick="switchView('totem')">📱 Totem</button>
+  </div>
+</nav>
+
+<!-- ── ADMIN VIEW ── -->
+<div id="view-admin" class="view active">
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+      <p class="section-title">Categorias</p>
+      <div class="form-group">
+        <div class="cat-row">
+          <input type="text" id="newCat" class="cat-input" placeholder="Ex: Bebidas, Sobremesas..." />
+          <button class="btn-icon" onclick="addCategory()">+</button>
+        </div>
+      </div>
+      <div class="cat-chips" id="catChips"></div>
+
+      <hr class="divider" />
+
+      <p class="section-title">Novo Item</p>
+
+      <div class="form-group">
+        <label>Foto do prato</label>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="itemPhoto" accept="image/*" onchange="handlePhotoUpload(event)" />
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <div class="upload-icon">📷</div>
+            <div class="upload-label">Clique para enviar foto</div>
+            <div class="upload-hint">JPG, PNG, WEBP — até 5MB</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Emoji 🍔 <span style="color:var(--muted);font-size:11px">(usado se não tiver foto)</span></label>
+        <input type="text" id="itemEmoji" placeholder="Ex: 🍕" maxlength="4" />
+      </div>
+      <div class="form-group">
+        <label>Nome do prato *</label>
+        <input type="text" id="itemName" placeholder="Ex: X-Burguer Especial" />
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea id="itemDesc" placeholder="Ingredientes, observações..."></textarea>
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>Preço (R$) *</label>
+          <input type="number" id="itemPrice" placeholder="0.00" step="0.01" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Categoria *</label>
+          <select id="itemCat">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Disponibilidade</label>
+        <select id="itemAvail">
+          <option value="1">✅ Disponível</option>
+          <option value="0">❌ Indisponível</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="addItem()">+ Adicionar ao cardápio</button>
+
+      <hr class="divider" />
+      <p class="section-title">Nome do Restaurante</p>
+      <div class="form-group">
+        <input type="text" id="restName" placeholder="Seu restaurante..." oninput="updateRestName(this.value)" />
+      </div>
+    </aside>
+
+    <main class="admin-main" id="adminMain">
+      <div class="main-header">
+        <h2>Cardápio</h2>
+        <span id="itemCountLabel">0 itens</span>
+      </div>
+      <div id="menuList"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ── TOTEM VIEW ── -->
+<div id="view-totem" class="view">
+  <div class="totem-outer">
+    <div class="totem">
+      <div class="totem-hero">
+        <div class="totem-rest-name" id="totemRestName">Meu Restaurante</div>
+        <div class="totem-tagline">Faça seu pedido aqui 👇</div>
+      </div>
+
+      <!-- SCREEN 1: categorias -->
+      <div class="tscreen active" id="screenCats">
+        <div class="tcat-screen" id="totemCatGrid">
+          <div class="tcat-greeting">O que vai ser hoje?</div>
+          <div class="tcat-hint">Toque em uma categoria para ver os itens</div>
+          <div class="tcat-grid" id="catCardGrid"></div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: itens da categoria -->
+      <div class="tscreen" id="screenItems">
+        <div class="titems-header">
+          <button class="btn-back" onclick="goBackToCats()">← Voltar</button>
+          <span class="titems-cat-name" id="currentCatName"></span>
+        </div>
+        <div class="totem-items" id="totemItems"></div>
+      </div>
+
+      <div class="success-screen" id="successScreen">
+        <div class="success-icon">🎉</div>
+        <h3>Pedido enviado!</h3>
+        <p>Aguarde, seu pedido está sendo preparado com carinho.</p>
+        <div class="order-code" id="orderCode">A01</div>
+        <p style="font-size:12px">Guarde esse número, te chamaremos quando estiver pronto.</p>
+        <button class="btn-novo" onclick="resetTotem()">Fazer novo pedido</button>
+      </div>
+
+      <div class="cart-bar" id="cartBar">
+        <div class="cart-info">
+          <div class="cart-items-count" id="cartCount">0 itens</div>
+          <div class="cart-total" id="cartTotal">R$ 0,00</div>
+        </div>
+        <button class="btn-checkout" id="btnCheckout" onclick="openModal()" disabled>
+          Ver pedido →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Confirmar pedido</h3>
+    <p>Revise os itens antes de enviar para a cozinha.</p>
+    <div class="order-summary" id="orderSummary"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmOrder()">✔ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ─── STATE ─── */
+  let categories = ['Entradas', 'Pratos', 'Bebidas', 'Sobremesas'];
+  let menu = [
+    { id: 1, name: 'X-Burguer Artesanal', desc: 'Pão brioche, 200g blend, queijo, molho especial', price: 32.90, cat: 'Pratos', emoji: '🍔', avail: true },
+    { id: 2, name: 'Frango Grelhado', desc: 'Filé grelhado com legumes e molho de ervas', price: 28.50, cat: 'Pratos', emoji: '🍗', avail: true },
+    { id: 3, name: 'Refrigerante Lata', desc: 'Coca, Guaraná, Sprite — 350ml', price: 6.00, cat: 'Bebidas', emoji: '🥤', avail: true },
+    { id: 4, name: 'Suco Natural', desc: 'Laranja, maracujá ou limão', price: 9.00, cat: 'Bebidas', emoji: '🍹', avail: true },
+    { id: 5, name: 'Pão de Alho', desc: '4 fatias crocantes com manteiga de ervas', price: 12.00, cat: 'Entradas', emoji: '🥖', avail: true },
+    { id: 6, name: 'Pudim de Leite', desc: 'Caseiro, caldinha dourada', price: 10.00, cat: 'Sobremesas', emoji: '🍮', avail: true },
+  ];
+  let nextId = 10;
+  let cart = {};
+  let restName = 'Meu Restaurante';
+  let activeCat = null;
+  let orderCounter = 1;
+
+  /* ─── UTILS ─── */
+  function fmt(v) {
+    return 'R$ ' + v.toFixed(2).replace('.', ',');
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+  function switchView(v) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-' + v).classList.add('active');
+    document.querySelectorAll('.nav-tab')[v === 'admin' ? 0 : 1].classList.add('active');
+    if (v === 'totem') renderTotem();
+  }
+
+  let pendingPhoto = null;
+
+  function handlePhotoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { showToast('Foto muito grande! Máx 5MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      pendingPhoto = ev.target.result;
+      const zone = document.getElementById('uploadZone');
+      zone.classList.add('has-img');
+      zone.innerHTML = `<input type="file" id="itemPhoto" accept="image/*" onchange="handlePhotoUpload(event)" />
+        <img class="upload-preview" src="${pendingPhoto}" />
+        <span class="upload-change">Trocar foto</span>`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resetUpload() {
+    pendingPhoto = null;
+    const zone = document.getElementById('uploadZone');
+    zone.classList.remove('has-img');
+    zone.innerHTML = `<input type="file" id="itemPhoto" accept="image/*" onchange="handlePhotoUpload(event)" />
+      <div class="upload-placeholder" id="uploadPlaceholder">
+        <div class="upload-icon">📷</div>
+        <div class="upload-label">Clique para enviar foto</div>
+        <div class="upload-hint">JPG, PNG, WEBP — até 5MB</div>
+      </div>`;
+  }
+
+  
+  function addCategory() {
+    const inp = document.getElementById('newCat');
+    const val = inp.value.trim();
+    if (!val) return;
+    if (categories.includes(val)) { showToast('Categoria já existe!'); return; }
+    categories.push(val);
+    inp.value = '';
+    renderAdmin();
+  }
+
+  function removeCategory(cat) {
+    categories = categories.filter(c => c !== cat);
+    menu = menu.map(i => i.cat === cat ? { ...i, cat: '' } : i);
+    renderAdmin();
+  }
+
+  function addItem() {
+    const name  = document.getElementById('itemName').value.trim();
+    const price = parseFloat(document.getElementById('itemPrice').value);
+    const cat   = document.getElementById('itemCat').value;
+    const desc  = document.getElementById('itemDesc').value.trim();
+    const emoji = document.getElementById('itemEmoji').value.trim() || '🍽️';
+    const avail = document.getElementById('itemAvail').value === '1';
+
+    if (!name) { showToast('Nome é obrigatório!'); return; }
+    if (isNaN(price) || price <= 0) { showToast('Preço inválido!'); return; }
+    if (!cat) { showToast('Selecione uma categoria!'); return; }
+
+    menu.push({ id: nextId++, name, desc, price, cat, emoji, avail, photo: pendingPhoto });
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemPrice').value = '';
+    document.getElementById('itemDesc').value = '';
+    document.getElementById('itemEmoji').value = '';
+    resetUpload();
+    showToast('Item adicionado! ✅');
+    renderAdmin();
+  }
+
+  function deleteItem(id) {
+    menu = menu.filter(i => i.id !== id);
+    renderAdmin();
+  }
+
+  function updateRestName(val) {
+    restName = val || 'Meu Restaurante';
+    document.getElementById('totemRestName').textContent = restName;
+  }
+
+  function renderAdmin() {
+    /* category chips */
+    const chips = document.getElementById('catChips');
+    chips.innerHTML = categories.map(c =>
+      `<span class="cat-chip">${c}<button class="chip-del" onclick="removeCategory('${c}')">×</button></span>`
+    ).join('');
+
+    /* category select */
+    const sel = document.getElementById('itemCat');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Selecione...</option>' +
+      categories.map(c => `<option value="${c}" ${c === cur ? 'selected' : ''}>${c}</option>`).join('');
+
+    /* menu list */
+    const list = document.getElementById('menuList');
+    const total = menu.length;
+    document.getElementById('itemCountLabel').textContent = total + ' ' + (total === 1 ? 'item' : 'itens');
+
+    if (total === 0) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><p>Nenhum item cadastrado.<br>Adicione pratos pelo painel ao lado.</p></div>`;
+      return;
+    }
+
+    let html = '';
+    categories.forEach(cat => {
+      const items = menu.filter(i => i.cat === cat);
+      if (!items.length) return;
+      html += `<div class="cat-section">
+        <div class="cat-header">
+          <span class="cat-name">${cat}</span>
+          <span class="cat-count">${items.length}</span>
+        </div>
+        <div class="items-grid">
+          ${items.map(i => `
+            <div class="item-card">
+              <span class="badge ${i.avail ? 'badge-on' : 'badge-off'}">${i.avail ? 'ativo' : 'pause'}</span>
+              ${i.photo ? `<img class="item-thumb" src="${i.photo}" />` : `<div class="item-emoji">${i.emoji}</div>`}
+              <div class="item-name">${i.name}</div>
+              <div class="item-desc">${i.desc || '—'}</div>
+              <div class="item-footer">
+                <span class="item-price">${fmt(i.price)}</span>
+                <button class="btn-del" onclick="deleteItem(${i.id})" title="Remover">🗑</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    });
+
+    /* uncategorized */
+    const uncat = menu.filter(i => !categories.includes(i.cat));
+    if (uncat.length) {
+      html += `<div class="cat-section">
+        <div class="cat-header"><span class="cat-name">Sem categoria</span><span class="cat-count">${uncat.length}</span></div>
+        <div class="items-grid">
+          ${uncat.map(i => `
+            <div class="item-card">
+              ${i.photo ? `<img class="item-thumb" src="${i.photo}" />` : `<div class="item-emoji">${i.emoji}</div>`}
+              <div class="item-name">${i.name}</div>
+              <div class="item-desc">${i.desc || '—'}</div>
+              <div class="item-footer">
+                <span class="item-price">${fmt(i.price)}</span>
+                <button class="btn-del" onclick="deleteItem(${i.id})">🗑</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    }
+
+    list.innerHTML = html;
+  }
+
+  /* ─── TOTEM ─── */
+  // emojis padrão por categoria (fallback)
+  const catEmojis = { 'Entradas':'🥗', 'Pratos':'🍽️', 'Bebidas':'🥤', 'Sobremesas':'🍰', 'Lanches':'🥪', 'Pizzas':'🍕', 'Massas':'🍝', 'Grelhados':'🥩', 'Vegano':'🥦' };
+
+  function renderTotem() {
+    showCatScreen();
+  }
+
+  function showCatScreen() {
+    document.getElementById('screenCats').classList.add('active');
+    document.getElementById('screenItems').classList.remove('active');
+
+    const available = menu.filter(i => i.avail);
+    const cats = [...new Set(available.map(i => i.cat).filter(Boolean))];
+
+    const grid = document.getElementById('catCardGrid');
+    if (!cats.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🍽️</div><p>Nenhum item disponível no momento.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = cats.map(cat => {
+      const items = available.filter(i => i.cat === cat);
+      const firstWithPhoto = items.find(i => i.photo);
+      const emoji = items[0]?.emoji || catEmojis[cat] || '🍽️';
+      const visual = firstWithPhoto
+        ? `<img src="${firstWithPhoto.photo}" style="width:60px;height:60px;object-fit:cover;border-radius:12px;">`
+        : `<div class="tcat-card-emoji">${emoji}</div>`;
+      return `<div class="tcat-card" onclick="selectCat('${cat}')">
+        ${visual}
+        <div class="tcat-card-name">${cat}</div>
+        <div class="tcat-card-count">${items.length} ${items.length === 1 ? 'item' : 'itens'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function selectCat(cat) {
+    activeCat = cat;
+    document.getElementById('currentCatName').textContent = cat;
+    document.getElementById('screenCats').classList.remove('active');
+    document.getElementById('screenItems').classList.add('active');
+    renderItems();
+  }
+
+  function goBackToCats() {
+    document.getElementById('screenItems').classList.remove('active');
+    document.getElementById('screenCats').classList.add('active');
+  }
+
+  function renderItems() {
+    const available = menu.filter(i => i.avail && i.cat === activeCat);
+    const itemsEl = document.getElementById('totemItems');
+
+    if (!available.length) {
+      itemsEl.innerHTML = `<div class="empty"><div class="empty-icon">🍽️</div><p>Nenhum item disponível.</p></div>`;
+      return;
+    }
+
+    itemsEl.innerHTML = available.map(i => {
+      const qty = cart[i.id] || 0;
+      const visual = i.photo
+        ? `<img class="titem-thumb" src="${i.photo}" />`
+        : `<div class="titem-emoji">${i.emoji}</div>`;
+      return `<div class="tmenu-item ${qty > 0 ? 'in-cart' : ''}" id="titem-${i.id}">
+        ${visual}
+        <div class="titem-info">
+          <div class="titem-name">${i.name}</div>
+          <div class="titem-desc">${i.desc || ''}</div>
+        </div>
+        <div class="titem-right">
+          <span class="titem-price">${fmt(i.price)}</span>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(${i.id}, -1)">−</button>
+            <span class="qty-num">${qty}</span>
+            <button class="qty-btn" onclick="changeQty(${i.id}, 1)">+</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    updateCartBar();
+  }
+
+  function setTCat(cat) {
+    activeCat = cat;
+    renderTotem();
+  }
+
+  function changeQty(id, delta) {
+    const cur = cart[id] || 0;
+    const next = Math.max(0, cur + delta);
+    if (next === 0) delete cart[id];
+    else cart[id] = next;
+    renderItems();
+    updateCartBar();
+  }
+
+  function updateCartBar() {
+    const ids = Object.keys(cart);
+    const totalQty = ids.reduce((s, id) => s + cart[id], 0);
+    const totalVal = ids.reduce((s, id) => {
+      const item = menu.find(i => i.id == id);
+      return s + (item ? item.price * cart[id] : 0);
+    }, 0);
+    document.getElementById('cartCount').textContent = totalQty + (totalQty === 1 ? ' item' : ' itens');
+    document.getElementById('cartTotal').textContent = fmt(totalVal);
+    document.getElementById('btnCheckout').disabled = totalQty === 0;
+  }
+
+  function openModal() {
+    const ids = Object.keys(cart);
+    let html = '';
+    let total = 0;
+    ids.forEach(id => {
+      const item = menu.find(i => i.id == id);
+      if (!item) return;
+      const sub = item.price * cart[id];
+      total += sub;
+      html += `<div class="order-line">
+        <span class="name">${cart[id]}× ${item.name}</span>
+        <span class="val">${fmt(sub)}</span>
+      </div>`;
+    });
+    html += `<div class="order-total-line">
+      <span class="label">Total</span>
+      <span class="amount">${fmt(total)}</span>
+    </div>`;
+    document.getElementById('orderSummary').innerHTML = html;
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  function confirmOrder() {
+    closeModal();
+    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 8));
+    const num = String(orderCounter++).padStart(2, '0');
+    document.getElementById('orderCode').textContent = letter + num;
+    document.getElementById('screenCats').classList.remove('active');
+    document.getElementById('screenItems').classList.remove('active');
+    document.getElementById('cartBar').style.display = 'none';
+    document.getElementById('successScreen').classList.add('show');
+  }
+
+  function resetTotem() {
+    cart = {};
+    activeCat = null;
+    document.getElementById('screenItems').classList.remove('active');
+    document.getElementById('totemItems').style.display = '';
+    document.getElementById('cartBar').style.display = '';
+    document.getElementById('successScreen').classList.remove('show');
+    showCatScreen();
+  }
+
+  /* ─── INIT ─── */
+  renderAdmin();
+</script>
+</body>
+</html>
