@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>useTotem — Autoatendimento</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#4a7c59;--green-dark:#2b4a35;--green-mid:#6a9e7a;
+      --green-light:#a8cbb5;--green-pale:#d4eadc;--green-ghost:#eef6f1;
+      --white:#fafcfb;--cream:#f4f7f5;--card:#ffffff;
+      --border:#dceae2;--border2:#c3daca;
+      --text:#2b3d32;--text2:#5a7265;--text3:#8aaa96;
+      --red:#c0574a;--red-pale:#faeae8;
+    }
+    html,body{height:100%}
+    body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);min-height:100vh;overflow:hidden}
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--green-light);border-radius:4px}
+
+    .food-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .food-bg span{position:absolute;font-size:28px;opacity:0.07;user-select:none;animation:floatEmoji linear infinite}
+    @keyframes floatEmoji{0%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-18px) rotate(8deg)}100%{transform:translateY(0) rotate(0deg)}}
+
+    .page{position:fixed;inset:0;display:none;flex-direction:column;z-index:1}
+    .page.active{display:flex}
+
+    /* LOGIN */
+    #loginPage{align-items:center;justify-content:center;background:var(--white)}
+    .login-wrap{width:min(360px,92vw)}
+    .login-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:32px;color:var(--text);text-align:center;margin-bottom:6px}
+    .login-logo span{color:var(--green)}
+    .login-sub{font-size:13px;color:var(--text3);margin-bottom:28px;text-align:center;font-weight:300}
+    .login-box{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:0 8px 32px rgba(74,124,89,.1)}
+    .login-box h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:20px}
+    .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+    .form-group label{font-size:12px;color:var(--text2);font-weight:500}
+    .form-group input,.form-group select,.form-group textarea{
+      background:var(--green-ghost);border:1.5px solid var(--border);color:var(--text);
+      border-radius:9px;padding:10px 12px;font-size:14px;font-family:'DM Sans',sans-serif;
+      outline:none;transition:border .2s;width:100%
+    }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green-mid);background:var(--white)}
+    .form-group textarea{resize:vertical;min-height:60px}
+    .form-group select option{background:#fff}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn-primary{background:var(--green);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px}
+    .btn-primary:hover{background:#3a6647}
+    .btn-primary:active{transform:scale(.98)}
+    .btn-secondary{background:var(--green-ghost);border:1.5px solid var(--border2);color:var(--green);border-radius:10px;padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%}
+    .btn-secondary:hover{background:var(--green-pale)}
+    .login-error{font-size:12px;color:var(--red);margin-bottom:10px;display:none;padding:8px 12px;background:var(--red-pale);border-radius:8px}
+    .login-error.show{display:block}
+    .divider{border:none;border-top:1.5px solid var(--border);margin:8px 0}
+    .btn-link{background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .2s;padding:6px;width:100%}
+    .btn-link:hover{color:var(--text)}
+
+    /* TOTEM */
+    #totemPage{background:transparent}
+    .totem-header{background:var(--green);padding:20px 24px 16px;display:flex;align-items:flex-end;justify-content:space-between;flex-shrink:0;position:relative;overflow:hidden}
+    .totem-header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3C/svg%3E") repeat;background-size:60px 60px}
+    .totem-rest-name{font-family:'Playfair Display',serif;font-weight:700;font-size:24px;color:#fff;position:relative}
+    .totem-tagline{font-size:13px;color:rgba(255,255,255,.65);margin-top:3px;font-weight:300;position:relative}
+    .btn-admin-access{background:rgba(0,0,0,.15);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;flex-shrink:0;position:relative}
+    .btn-admin-access:hover{background:rgba(0,0,0,.3);color:#fff}
+
+    .tscreen{display:none;flex-direction:column;flex:1;overflow:hidden}
+    .tscreen.active{display:flex}
+
+    .tcat-wrap{padding:20px 20px 0;overflow-y:auto;flex:1}
+    .tcat-greeting{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:4px}
+    .tcat-hint{font-size:13px;color:var(--text3);margin-bottom:18px;font-weight:300}
+    .tcat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;padding-bottom:20px}
+    .tcat-card{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:22px 14px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;box-shadow:0 2px 10px rgba(74,124,89,.06)}
+    .tcat-card:hover{border-color:var(--green-mid);background:var(--green-ghost);transform:translateY(-3px);box-shadow:0 8px 20px rgba(74,124,89,.12)}
+    .tcat-card:active{transform:scale(.97)}
+    .tcat-card-img{width:64px;height:64px;object-fit:cover;border-radius:14px}
+    .tcat-card-emoji{font-size:44px;line-height:1}
+    .tcat-card-name{font-weight:600;font-size:14px;color:var(--text)}
+    .tcat-card-count{font-size:11px;color:var(--text3)}
+
+    .titems-topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--white)}
+    .btn-back{background:var(--green-ghost);border:1.5px solid var(--border);color:var(--green);border-radius:9px;padding:7px 13px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0;font-weight:500}
+    .btn-back:hover{background:var(--green-pale);border-color:var(--green-mid)}
+    .titems-cat-name{font-family:'Playfair Display',serif;font-weight:700;font-size:17px;color:var(--text)}
+    .totem-items-list{overflow-y:auto;padding:14px 16px;flex:1;background:var(--cream)}
+    .tmenu-item{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:14px;margin-bottom:9px;border:1.5px solid var(--border);background:var(--card);transition:all .18s;box-shadow:0 1px 6px rgba(74,124,89,.05)}
+    .tmenu-item:hover{border-color:var(--green-light)}
+    .tmenu-item.in-cart{border-color:var(--green);background:var(--green-ghost)}
+    .titem-thumb{width:58px;height:58px;object-fit:cover;border-radius:11px;flex-shrink:0}
+    .titem-emoji{font-size:34px;width:58px;text-align:center;flex-shrink:0}
+    .titem-no-photo{width:58px;height:58px;border-radius:11px;background:var(--green-ghost);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3);text-align:center;line-height:1.3;flex-shrink:0;padding:4px}
+    .titem-info{flex:1;min-width:0}
+    .titem-name{font-weight:600;font-size:14px;color:var(--text);margin-bottom:3px}
+    .titem-desc{font-size:12px;color:var(--text3);line-height:1.4;font-weight:300}
+    .titem-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+    .titem-price{font-weight:600;font-size:15px;color:var(--green)}
+    .qty-ctrl{display:flex;align-items:center;gap:6px}
+    .qty-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border2);background:var(--white);color:var(--green);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-weight:600}
+    .qty-btn:hover{background:var(--green);border-color:var(--green);color:#fff}
+    .qty-num{font-size:14px;font-weight:600;min-width:16px;text-align:center}
+
+    .cart-bar{border-top:1.5px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;background:var(--white);flex-shrink:0}
+    .cart-items-count{font-size:12px;color:var(--text3);margin-bottom:2px}
+    .cart-total{font-weight:700;font-size:20px;color:var(--text)}
+    .btn-checkout{background:var(--green);color:#fff;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;box-shadow:0 4px 14px rgba(74,124,89,.3)}
+    .btn-checkout:hover{background:#3a6647}
+    .btn-checkout:disabled{background:var(--border);color:var(--text3);cursor:not-allowed;box-shadow:none}
+
+    .success-screen{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;flex:1;background:var(--cream)}
+    .success-screen.show{display:flex}
+    .success-icon{font-size:72px;margin-bottom:18px}
+    .success-screen h3{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:8px}
+    .success-screen p{color:var(--text3);font-size:14px;line-height:1.6;font-weight:300}
+    .order-code{background:var(--white);border:2px solid var(--green-pale);border-radius:16px;padding:14px 32px;margin:22px 0;font-family:'Playfair Display',serif;font-size:38px;font-weight:700;color:var(--green);letter-spacing:6px}
+    .btn-novo{background:transparent;border:1.5px solid var(--border2);color:var(--text3);border-radius:10px;padding:10px 24px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;margin-top:8px}
+    .btn-novo:hover{border-color:var(--green);color:var(--green)}
+
+    /* ADMIN */
+    #adminDrawer{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;background:var(--cream)}
+    #adminDrawer.open{display:flex}
+    .admin-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1.5px solid var(--border);background:var(--white);flex-shrink:0}
+    .admin-nav-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:var(--text)}
+    .admin-nav-logo span{color:var(--green)}
+    .admin-nav-right{display:flex;align-items:center;gap:10px}
+    .admin-user{font-size:13px;color:var(--text3)}
+    .btn-logout{background:var(--white);border:1.5px solid var(--border);color:var(--text2);border-radius:8px;padding:7px 13px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-logout:hover{border-color:var(--red);color:var(--red)}
+    .btn-close-admin{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;transition:color .2s}
+    .btn-close-admin:hover{color:var(--text)}
+    .admin-layout{display:grid;grid-template-columns:310px 1fr;flex:1;overflow:hidden}
+    .admin-sidebar{background:var(--white);border-right:1.5px solid var(--border);padding:22px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+    .section-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1.8px}
+    .cat-row{display:flex;gap:8px}
+    .cat-row input{flex:1}
+    .btn-icon{background:var(--green);border:none;color:#fff;border-radius:9px;padding:9px 13px;cursor:pointer;font-size:16px;font-weight:600;transition:background .2s;flex-shrink:0}
+    .btn-icon:hover{background:#3a6647}
+    .cat-chips{display:flex;flex-wrap:wrap;gap:6px}
+    .cat-chip{background:var(--green-ghost);border:1.5px solid var(--border);color:var(--green);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px}
+    .chip-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0;line-height:1;transition:color .2s}
+    .chip-del:hover{color:var(--red)}
+    .upload-zone{border:2px dashed var(--border2);border-radius:11px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--green-ghost)}
+    .upload-zone:hover{border-color:var(--green-mid);background:var(--green-pale)}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .upload-zone.has-img{padding:0;border-style:solid;border-color:var(--green-light)}
+    .upload-preview{width:100%;height:120px;object-fit:cover;border-radius:9px;display:block}
+    .upload-placeholder{display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+    .upload-icon{font-size:22px}.upload-label{font-size:12px;color:var(--text2)}.upload-hint{font-size:11px;color:var(--text3)}
+    .upload-change{position:absolute;bottom:6px;right:6px;background:rgba(74,124,89,.75);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;pointer-events:none}
+    .admin-main{padding:22px;overflow-y:auto;background:var(--cream)}
+    .main-header{display:flex;align-items:baseline;gap:10px;margin-bottom:20px}
+    .main-header h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text)}
+    .main-header span{color:var(--text3);font-size:14px}
+    .cat-section{margin-bottom:28px}
+    .cat-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--border)}
+    .cat-name{font-size:14px;font-weight:600;color:var(--text)}
+    .cat-count{background:var(--green-ghost);color:var(--green);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600}
+    .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px}
+    .item-card{background:var(--card);border-radius:14px;padding:14px;border:1.5px solid var(--border);position:relative;transition:all .2s;box-shadow:0 1px 6px rgba(74,124,89,.05)}
+    .item-card:hover{border-color:var(--green-light)}
+    .item-thumb{width:100%;height:96px;object-fit:cover;border-radius:9px;margin-bottom:10px;display:block}
+    .item-emoji{font-size:28px;margin-bottom:8px}
+    .item-name{font-weight:600;font-size:14px;color:var(--text);margin-bottom:3px}
+    .item-desc{font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.4;min-height:30px;font-weight:300}
+    .item-footer{display:flex;align-items:center;justify-content:space-between}
+    .item-price{color:var(--green);font-weight:700;font-size:15px}
+    .btn-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:4px;transition:color .2s}
+    .btn-del:hover{color:var(--red)}
+    .badge{position:absolute;top:10px;right:10px;font-size:10px;border-radius:6px;padding:2px 7px;font-weight:600}
+    .badge-on{background:var(--green-ghost);color:var(--green)}
+    .badge-off{background:var(--red-pale);color:var(--red)}
+    .empty{text-align:center;padding:60px 20px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:10px}
+    .empty-icon{font-size:48px;opacity:.35}
+    .empty p{font-size:14px;font-weight:300}
+    .import-box{background:var(--green-ghost);border:2px dashed var(--border2);border-radius:12px;padding:16px;text-align:center;cursor:pointer;position:relative;transition:all .2s}
+    .import-box:hover{border-color:var(--green);background:var(--green-pale)}
+    .import-box input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .import-box p{font-size:12px;color:var(--text2);pointer-events:none}
+    .import-box strong{font-size:13px;color:var(--green);display:block;margin-bottom:4px;pointer-events:none}
+
+    /* MODAIS */
+    .modal-overlay{position:fixed;inset:0;background:rgba(230,241,234,.85);display:none;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(6px)}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);border-radius:22px;padding:28px;width:min(400px,94vw);border:1.5px solid var(--border);box-shadow:0 16px 60px rgba(74,124,89,.14);animation:popIn .22s ease}
+    @keyframes popIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    .modal h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px}
+    .modal p{color:var(--text3);font-size:14px;margin-bottom:18px;font-weight:300}
+    .order-summary{background:var(--green-ghost);border-radius:12px;padding:14px;margin-bottom:18px;border:1px solid var(--border)}
+    .order-line{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2)}
+    .order-line:last-child{border-bottom:none}
+    .order-total-line{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1.5px solid var(--border)}
+    .order-total-line .label{font-weight:600;font-size:14px;color:var(--text)}
+    .order-total-line .amount{font-weight:700;font-size:18px;color:var(--green)}
+    .modal-btns{display:flex;gap:10px}
+    .btn-cancel{flex:1;background:var(--green-ghost);border:1.5px solid var(--border);color:var(--text2);border-radius:10px;padding:10px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-cancel:hover{border-color:var(--red);color:var(--red)}
+    .modal .btn-primary{flex:2}
+    .mesa-input{font-size:32px;text-align:center;font-weight:700;color:var(--text);letter-spacing:4px;padding:16px;border-radius:12px;border:2px solid var(--border2);background:var(--green-ghost);width:100%}
+    .mesa-input:focus{border-color:var(--green);background:var(--white);outline:none}
+
+    .review-overlay{position:fixed;inset:0;background:rgba(230,241,234,.85);display:none;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(6px)}
+    .review-overlay.open{display:flex}
+    .review-box{background:var(--white);border-radius:20px;padding:24px;width:min(560px,96vw);max-height:85vh;border:1.5px solid var(--border);box-shadow:0 16px 60px rgba(74,124,89,.14);display:flex;flex-direction:column;gap:14px;animation:popIn .22s ease}
+    .review-box h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text)}
+    .review-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px}
+    .review-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--cream);cursor:pointer;transition:all .15s}
+    .review-item.selected{border-color:var(--green);background:var(--green-ghost)}
+    .review-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;transition:all .15s}
+    .review-item.selected .review-check{background:var(--green);border-color:var(--green);color:#fff}
+    .review-info{flex:1;min-width:0}
+    .review-name{font-size:13px;font-weight:600;color:var(--text)}
+    .review-meta{font-size:11px;color:var(--text3)}
+    .review-price{font-size:14px;font-weight:700;color:var(--green)}
+    .review-actions{display:flex;gap:10px}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--white);padding:10px 18px;border-radius:10px;font-size:13px;z-index:500;transition:transform .3s ease;white-space:nowrap;box-shadow:0 4px 20px rgba(43,61,50,.25)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .loading-overlay{position:fixed;inset:0;background:rgba(244,247,245,.85);display:none;align-items:center;justify-content:center;z-index:600;flex-direction:column;gap:14px;backdrop-filter:blur(4px)}
+    .loading-overlay.show{display:flex}
+    .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-overlay p{font-size:14px;color:var(--text3)}
+
+    @media(max-width:640px){
+      .admin-layout{grid-template-columns:1fr}
+      .admin-sidebar{max-height:55vh;border-right:none;border-bottom:1.5px solid var(--border)}
+    }
+  </style>
+</head>
+<body>
+<div class="food-bg" id="foodBg"></div>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p id="loadingMsg">Carregando...</p></div>
+
+<!-- LOGIN -->
+<div class="page active" id="loginPage">
+  <div class="login-wrap">
+    <div class="login-logo">use<span>T</span>otem</div>
+    <div class="login-sub">Autoatendimento para restaurantes</div>
+    <div class="login-box">
+      <h3>Entrar no restaurante</h3>
+      <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="usuário do restaurante" autocomplete="off"/></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="login-error" id="loginError">Usuário ou senha incorretos.</div>
+      <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOTEM -->
+<div class="page" id="totemPage">
+  <div class="totem-header">
+    <div>
+      <div class="totem-rest-name" id="totemRestName">Restaurante</div>
+      <div class="totem-tagline">Toque em uma categoria para começar</div>
+    </div>
+    <button class="btn-admin-access" onclick="openAdminLogin()">⚙</button>
+  </div>
+  <div class="tscreen active" id="screenCats">
+    <div class="tcat-wrap">
+      <div class="tcat-greeting">O que vai ser hoje?</div>
+      <div class="tcat-hint">Escolha uma categoria abaixo</div>
+      <div class="tcat-grid" id="catCardGrid"></div>
+    </div>
+  </div>
+  <div class="tscreen" id="screenItems">
+    <div class="titems-topbar">
+      <button class="btn-back" onclick="goBackToCats()">← Voltar</button>
+      <span class="titems-cat-name" id="currentCatName"></span>
+    </div>
+    <div class="totem-items-list" id="totemItemsList"></div>
+  </div>
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🌿</div>
+    <h3>Pedido enviado!</h3>
+    <p>Mesa <strong id="mesaConfirmada"></strong> — seu pedido está sendo preparado.</p>
+    <div class="order-code" id="orderCode">A01</div>
+    <p style="font-size:12px;margin-top:4px">Guarde esse número — te avisamos quando estiver pronto.</p>
+    <button class="btn-novo" onclick="resetTotem()">Fazer novo pedido</button>
+  </div>
+  <div class="cart-bar" id="cartBar">
+    <div>
+      <div class="cart-items-count" id="cartCount">0 itens</div>
+      <div class="cart-total" id="cartTotal">R$ 0,00</div>
+    </div>
+    <button class="btn-checkout" id="btnCheckout" onclick="openMesaModal()" disabled>Ver pedido →</button>
+  </div>
+</div>
+
+<!-- ADMIN DRAWER -->
+<div id="adminDrawer">
+  <div class="admin-nav">
+    <div class="admin-nav-logo">use<span>T</span>otem <span style="color:var(--text3);font-size:13px;font-family:'DM Sans',sans-serif;font-weight:400">— Admin</span></div>
+    <div class="admin-nav-right">
+      <span class="admin-user" id="adminUserLabel"></span>
+      <button class="btn-logout" onclick="doAdminLogout()">Sair</button>
+      <button class="btn-close-admin" onclick="closeAdmin()">✕</button>
+    </div>
+  </div>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="section-title">Configurações</p>
+      <div class="form-group"><label>Nome do restaurante</label><input type="text" id="restNameInput" placeholder="Nome..." oninput="updateRestName(this.value)"/></div>
+      <hr style="border:none;border-top:1.5px solid var(--border)"/>
+      <p class="section-title">Importar planilha</p>
+      <div class="import-box">
+        <input type="file" id="importFile" accept=".xlsx,.csv" onchange="handleImport(event)"/>
+        <strong>📊 Clique para importar</strong>
+        <p>Excel ou CSV: categoria · nome · preço · descrição</p>
+      </div>
+      <a href="#" onclick="downloadTemplate(event)" style="font-size:12px;color:var(--green);text-align:center;display:block">⬇ Baixar modelo</a>
+      <hr style="border:none;border-top:1.5px solid var(--border)"/>
+      <p class="section-title">Categorias</p>
+      <div class="form-group">
+        <div class="cat-row">
+          <input type="text" id="newCat" placeholder="Ex: Pizzas, Bebidas..." onkeydown="if(event.key==='Enter')addCategory()"/>
+          <button class="btn-icon" onclick="addCategory()">+</button>
+        </div>
+      </div>
+      <div class="cat-chips" id="catChips"></div>
+      <hr style="border:none;border-top:1.5px solid var(--border)"/>
+      <p class="section-title">Novo item</p>
+      <div class="form-group"><label>Foto do prato</label>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="itemPhoto" accept="image/*" onchange="handlePhotoUpload(event)"/>
+          <div class="upload-placeholder"><div class="upload-icon">📷</div><div class="upload-label">Clique para enviar foto</div><div class="upload-hint">opcional</div></div>
+        </div>
+      </div>
+      <div class="form-group"><label>Emoji</label><input type="text" id="itemEmoji" placeholder="🍕" maxlength="4"/></div>
+      <div class="form-group"><label>Nome *</label><input type="text" id="itemName" placeholder="Ex: X-Burguer Especial"/></div>
+      <div class="form-group"><label>Descrição</label><textarea id="itemDesc" placeholder="Ingredientes..."></textarea></div>
+      <div class="row2">
+        <div class="form-group"><label>Preço (R$) *</label><input type="number" id="itemPrice" placeholder="0,00" step="0.01" min="0"/></div>
+        <div class="form-group"><label>Categoria *</label><select id="itemCat"><option value="">Selecione...</option></select></div>
+      </div>
+      <div class="form-group"><label>Disponibilidade</label>
+        <select id="itemAvail"><option value="1">✅ Disponível</option><option value="0">❌ Indisponível</option></select>
+      </div>
+      <button class="btn-primary" onclick="addItem()">+ Adicionar ao cardápio</button>
+      <hr style="border:none;border-top:1.5px solid var(--border)"/>
+      <p class="section-title">Segurança</p>
+      <div class="form-group"><label>Novo usuário</label><input type="text" id="newAdminUser" placeholder="novo usuário"/></div>
+      <div class="form-group"><label>Nova senha</label><input type="password" id="newAdminPass" placeholder="mínimo 4 caracteres"/></div>
+      <button class="btn-secondary" onclick="changeAdminCredentials()">Salvar credenciais</button>
+    </aside>
+    <main class="admin-main">
+      <div class="main-header"><h2>Cardápio</h2><span id="itemCountLabel">0 itens</span></div>
+      <div id="menuList"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="modal-overlay" id="adminLoginModal">
+  <div class="modal">
+    <h3>Acesso Admin</h3>
+    <p>Entre com suas credenciais de administrador.</p>
+    <div class="form-group"><label>Usuário</label><input type="text" id="adminLoginUser" autocomplete="off"/></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="adminLoginPass" onkeydown="if(event.key==='Enter')doAdminLogin()"/></div>
+    <div class="login-error" id="adminLoginError">Credenciais incorretas.</div>
+    <div class="modal-btns" style="margin-top:4px">
+      <button class="btn-cancel" onclick="closeAdminLogin()">Cancelar</button>
+      <button class="btn-primary" style="flex:2" onclick="doAdminLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MESA MODAL -->
+<div class="modal-overlay" id="mesaModal">
+  <div class="modal">
+    <h3>Qual é a sua mesa?</h3>
+    <p>Digite o número da mesa para confirmar.</p>
+    <div class="form-group"><input type="number" class="mesa-input" id="mesaInput" placeholder="0" min="1"/></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeMesaModal()">Cancelar</button>
+      <button class="btn-primary" style="flex:2" onclick="openOrderModal()">Confirmar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <h3>Confirmar pedido</h3>
+    <p id="orderMesaLabel">Revise os itens.</p>
+    <div class="order-summary" id="orderSummary"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeOrderModal()">Voltar</button>
+      <button class="btn-primary" style="flex:2" onclick="confirmOrder()">✔ Fazer pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT REVIEW -->
+<div class="review-overlay" id="reviewOverlay">
+  <div class="review-box">
+    <h3>Revisar importação</h3>
+    <p style="font-size:13px;color:var(--text3)">Clique para marcar/desmarcar os itens que deseja importar.</p>
+    <div class="review-list" id="reviewList"></div>
+    <div class="review-actions">
+      <button class="btn-cancel" onclick="closeReview()" style="flex:1">Cancelar</button>
+      <button class="btn-primary" style="flex:2" onclick="confirmImport()">✔ Importar selecionados</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDa0_0Y_t-Fp9drHLYLCN3kaAWzglnNVQY",
+  authDomain: "usetotem.firebaseapp.com",
+  projectId: "usetotem",
+  storageBucket: "usetotem.firebasestorage.app",
+  messagingSenderId: "592451036665",
+  appId: "1:592451036665:web:283441a57b3a5b59a68928"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ── STATE ── */
+let restaurante = null;
+let categorias = [];
+let menu = [];
+let cart = {};
+let activeCat = null;
+let orderCounter = 1;
+let pendingPhoto = null;
+let importItems = [];
+let mesaAtual = '';
+
+const catEmojis = {'Entradas':'🥗','Pratos':'🍽️','Bebidas':'🥤','Sobremesas':'🍰','Lanches':'🥪','Pizzas':'🍕','Massas':'🍝','Grelhados':'🥩','Vegano':'🥦'};
+
+/* ── UTILS ── */
+function fmt(v){return 'R$ '+parseFloat(v||0).toFixed(2).replace('.',',')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function loading(show,msg='Carregando...'){document.getElementById('loadingOverlay').classList.toggle('show',show);document.getElementById('loadingMsg').textContent=msg;}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+/* ── FOOD BG ── */
+(function(){
+  const emojis=['🍕','🍔','🍗','🌮','🍜','🥗','🍣','🥩','🍰','🧁','🥐','🍱','🥘','🍛','🥙','🍤','🍦','🥑','🫐'];
+  const bg=document.getElementById('foodBg');
+  const cols=Math.ceil(window.innerWidth/90)+1,rows=Math.ceil(window.innerHeight/90)+1;
+  for(let i=0;i<cols*rows;i++){
+    const el=document.createElement('span');
+    el.textContent=emojis[i%emojis.length];
+    const col=i%cols,row=Math.floor(i/cols);
+    el.style.left=(col*90+(row%2===0?0:45))+'px';
+    el.style.top=(row*90)+'px';
+    el.style.animationDuration=(6+(i%5)*1.4)+'s';
+    el.style.animationDelay=(i%7*.6)+'s';
+    bg.appendChild(el);
+  }
+})();
+
+/* ── LOGIN ── */
+window.doLogin = async function(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!user||!pass){showToast('Preencha usuário e senha');return;}
+  loading(true,'Verificando...');
+  try{
+    const q=query(collection(db,'restaurantes'),where('usuario','==',user),where('senha','==',pass),where('ativo','==',true));
+    const snap=await getDocs(q);
+    if(snap.empty){document.getElementById('loginError').classList.add('show');loading(false);return;}
+    restaurante={id:snap.docs[0].id,...snap.docs[0].data()};
+    document.getElementById('loginError').classList.remove('show');
+    await loadCardapio();
+    document.getElementById('totemRestName').textContent=restaurante.nome;
+    showPage('totemPage');
+    showCatScreen();
+  }catch(e){showToast('Erro: '+e.message);}
+  loading(false);
+};
+
+async function loadCardapio(){
+  loading(true,'Carregando cardápio...');
+  try{
+    const cSnap=await getDocs(query(collection(db,'categorias'),where('restauranteId','==',restaurante.id)));
+    categorias=cSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const iSnap=await getDocs(query(collection(db,'itens'),where('restauranteId','==',restaurante.id)));
+    menu=iSnap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){showToast('Erro ao carregar: '+e.message);}
+  loading(false);
+}
+
+/* ── ADMIN LOGIN ── */
+window.openAdminLogin = function(){
+  document.getElementById('adminLoginUser').value='';
+  document.getElementById('adminLoginPass').value='';
+  document.getElementById('adminLoginError').classList.remove('show');
+  document.getElementById('adminLoginModal').classList.add('open');
+  setTimeout(()=>document.getElementById('adminLoginUser').focus(),100);
+};
+window.closeAdminLogin = function(){document.getElementById('adminLoginModal').classList.remove('open');};
+window.doAdminLogin = function(){
+  const u=document.getElementById('adminLoginUser').value.trim();
+  const p=document.getElementById('adminLoginPass').value;
+  if(u===restaurante.usuario&&p===restaurante.senha){
+    window.closeAdminLogin();
+    document.getElementById('adminUserLabel').textContent=u;
+    document.getElementById('restNameInput').value=restaurante.nome;
+    renderAdmin();
+    document.getElementById('adminDrawer').classList.add('open');
+  }else{document.getElementById('adminLoginError').classList.add('show');}
+};
+window.closeAdmin = function(){document.getElementById('adminDrawer').classList.remove('open');showCatScreen();};
+window.doAdminLogout = function(){document.getElementById('adminDrawer').classList.remove('open');showToast('Sessão encerrada.');};
+
+/* ── ADMIN ACTIONS ── */
+window.updateRestName = async function(val){
+  restaurante.nome=val||restaurante.nome;
+  document.getElementById('totemRestName').textContent=restaurante.nome;
+  try{await updateDoc(doc(db,'restaurantes',restaurante.id),{nome:restaurante.nome});}catch(e){}
+};
+
+window.addCategory = async function(){
+  const inp=document.getElementById('newCat'),val=inp.value.trim();
+  if(!val)return;
+  if(categorias.find(c=>c.nome===val)){showToast('Categoria já existe!');return;}
+  try{
+    const ref=await addDoc(collection(db,'categorias'),{restauranteId:restaurante.id,nome:val,ordem:categorias.length});
+    categorias.push({id:ref.id,restauranteId:restaurante.id,nome:val,ordem:categorias.length});
+    inp.value='';renderAdmin();showToast('Categoria adicionada! ✅');
+  }catch(e){showToast('Erro: '+e.message);}
+};
+
+window.removeCategory = async function(id,nome){
+  if(!confirm(`Remover categoria "${nome}"?`))return;
+  try{
+    await deleteDoc(doc(db,'categorias',id));
+    categorias=categorias.filter(c=>c.id!==id);
+    menu=menu.filter(i=>i.categoriaId!==id);
+    renderAdmin();showToast('Categoria removida.');
+  }catch(e){showToast('Erro: '+e.message);}
+};
+
+window.handlePhotoUpload = function(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>5*1024*1024){showToast('Foto muito grande! Máx 5MB.');return;}
+  const r=new FileReader();
+  r.onload=ev=>{
+    pendingPhoto=ev.target.result;
+    const z=document.getElementById('uploadZone');
+    z.classList.add('has-img');
+    z.innerHTML=`<input type="file" id="itemPhoto" accept="image/*" onchange="handlePhotoUpload(event)"/>
+      <img class="upload-preview" src="${pendingPhoto}"/>
+      <span class="upload-change">Trocar</span>`;
+  };
+  r.readAsDataURL(file);
+};
+
+function resetUpload(){
+  pendingPhoto=null;
+  const z=document.getElementById('uploadZone');
+  z.classList.remove('has-img');
+  z.innerHTML=`<input type="file" id="itemPhoto" accept="image/*" onchange="handlePhotoUpload(event)"/>
+    <div class="upload-placeholder"><div class="upload-icon">📷</div><div class="upload-label">Clique para enviar foto</div><div class="upload-hint">opcional</div></div>`;
+}
+
+window.addItem = async function(){
+  const name=document.getElementById('itemName').value.trim();
+  const price=parseFloat(document.getElementById('itemPrice').value);
+  const catId=document.getElementById('itemCat').value;
+  const desc=document.getElementById('itemDesc').value.trim();
+  const emoji=document.getElementById('itemEmoji').value.trim()||'🍽️';
+  const avail=document.getElementById('itemAvail').value==='1';
+  if(!name){showToast('Nome é obrigatório!');return;}
+  if(isNaN(price)||price<=0){showToast('Preço inválido!');return;}
+  if(!catId){showToast('Selecione uma categoria!');return;}
+  loading(true,'Salvando...');
+  try{
+    const ref=await addDoc(collection(db,'itens'),{restauranteId:restaurante.id,categoriaId:catId,nome:name,descricao:desc,preco:price,emoji,foto:pendingPhoto||null,disponivel:avail,ordem:menu.length});
+    menu.push({id:ref.id,restauranteId:restaurante.id,categoriaId:catId,nome:name,descricao:desc,preco:price,emoji,foto:pendingPhoto||null,disponivel:avail,ordem:menu.length});
+    document.getElementById('itemName').value='';
+    document.getElementById('itemPrice').value='';
+    document.getElementById('itemDesc').value='';
+    document.getElementById('itemEmoji').value='';
+    document.getElementById('itemAvail').value='1';
+    resetUpload();renderAdmin();showToast('Item adicionado! ✅');
+  }catch(e){showToast('Erro: '+e.message);}
+  loading(false);
+};
+
+window.deleteItem = async function(id){
+  if(!confirm('Remover este item?'))return;
+  try{
+    await deleteDoc(doc(db,'itens',id));
+    menu=menu.filter(i=>i.id!==id);
+    renderAdmin();showToast('Item removido.');
+  }catch(e){showToast('Erro: '+e.message);}
+};
+
+window.changeAdminCredentials = async function(){
+  const u=document.getElementById('newAdminUser').value.trim();
+  const p=document.getElementById('newAdminPass').value;
+  if(!u&&!p){showToast('Preencha ao menos um campo.');return;}
+  if(p&&p.length<4){showToast('Senha muito curta!');return;}
+  const upd={};
+  if(u){upd.usuario=u;restaurante.usuario=u;}
+  if(p){upd.senha=p;restaurante.senha=p;}
+  try{
+    await updateDoc(doc(db,'restaurantes',restaurante.id),upd);
+    document.getElementById('newAdminUser').value='';
+    document.getElementById('newAdminPass').value='';
+    showToast('Credenciais salvas! ✅');
+  }catch(e){showToast('Erro: '+e.message);}
+};
+
+function renderAdmin(){
+  document.getElementById('catChips').innerHTML=categorias.map(c=>
+    `<span class="cat-chip">${c.nome}<button class="chip-del" onclick="removeCategory('${c.id}','${c.nome}')">×</button></span>`
+  ).join('');
+  const sel=document.getElementById('itemCat'),cur=sel.value;
+  sel.innerHTML='<option value="">Selecione...</option>'+categorias.map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.nome}</option>`).join('');
+  const list=document.getElementById('menuList');
+  const total=menu.length;
+  document.getElementById('itemCountLabel').textContent=total+(total===1?' item':' itens');
+  if(!total){list.innerHTML=`<div class="empty"><div class="empty-icon">🍽️</div><p>Nenhum item cadastrado.</p></div>`;return;}
+  const card=i=>`<div class="item-card">
+    <span class="badge ${i.disponivel?'badge-on':'badge-off'}">${i.disponivel?'ativo':'pause'}</span>
+    ${i.foto?`<img class="item-thumb" src="${i.foto}"/>`:`<div class="item-emoji">${i.emoji||'🍽️'}</div>`}
+    <div class="item-name">${i.nome}</div>
+    <div class="item-desc">${i.descricao||'—'}</div>
+    <div class="item-footer"><span class="item-price">${fmt(i.preco)}</span>
+    <button class="btn-del" onclick="deleteItem('${i.id}')">🗑</button></div>
+  </div>`;
+  let html='';
+  categorias.forEach(cat=>{
+    const items=menu.filter(i=>i.categoriaId===cat.id);if(!items.length)return;
+    html+=`<div class="cat-section"><div class="cat-header"><span class="cat-name">${cat.nome}</span><span class="cat-count">${items.length}</span></div><div class="items-grid">${items.map(card).join('')}</div></div>`;
+  });
+  list.innerHTML=html||`<div class="empty"><div class="empty-icon">🍽️</div><p>Nenhum item cadastrado.</p></div>`;
+}
+
+/* ── IMPORT ── */
+window.downloadTemplate = function(e){
+  e.preventDefault();
+  const ws=XLSX.utils.aoa_to_sheet([['categoria','nome','preco','descricao'],['Pratos','X-Burguer','32.90','Pão brioche'],['Bebidas','Suco Natural','9.00','Laranja ou limão']]);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Cardápio');XLSX.writeFile(wb,'modelo_usetotem.xlsx');
+};
+
+window.handleImport = function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      importItems=rows.slice(1).filter(r=>r[1]&&r[2]).map((r,i)=>({
+        _id:i,selected:true,
+        categoria:String(r[0]||'').trim(),nome:String(r[1]||'').trim(),
+        preco:parseFloat(String(r[2]).replace(',','.')),descricao:String(r[3]||'').trim(),
+      })).filter(r=>r.nome&&!isNaN(r.preco));
+      if(!importItems.length){showToast('Nenhum item válido encontrado.');return;}
+      renderReview();document.getElementById('reviewOverlay').classList.add('open');
+    }catch(err){showToast('Erro ao ler planilha.');}
+  };
+  reader.readAsBinaryString(file);e.target.value='';
+};
+
+function renderReview(){
+  document.getElementById('reviewList').innerHTML=importItems.map(item=>`
+    <div class="review-item ${item.selected?'selected':''}" onclick="toggleReviewItem(${item._id})" id="ri-${item._id}">
+      <div class="review-check">${item.selected?'✓':''}</div>
+      <div class="review-info"><div class="review-name">${item.nome}</div><div class="review-meta">${item.categoria}${item.descricao?' · '+item.descricao:''}</div></div>
+      <div class="review-price">${fmt(item.preco)}</div>
+    </div>`).join('');
+}
+window.toggleReviewItem = function(id){
+  const item=importItems.find(i=>i._id===id);if(!item)return;
+  item.selected=!item.selected;
+  const el=document.getElementById('ri-'+id);
+  el.classList.toggle('selected',item.selected);
+  el.querySelector('.review-check').textContent=item.selected?'✓':'';
+};
+window.closeReview = function(){document.getElementById('reviewOverlay').classList.remove('open');};
+
+window.confirmImport = async function(){
+  const selected=importItems.filter(i=>i.selected);
+  if(!selected.length){showToast('Selecione ao menos 1 item.');return;}
+  loading(true,'Importando...');
+  try{
+    const novasCats=[...new Set(selected.map(i=>i.categoria))];
+    for(const nome of novasCats){
+      if(!categorias.find(c=>c.nome===nome)){
+        const ref=await addDoc(collection(db,'categorias'),{restauranteId:restaurante.id,nome,ordem:categorias.length});
+        categorias.push({id:ref.id,restauranteId:restaurante.id,nome,ordem:categorias.length});
+      }
+    }
+    for(const item of selected){
+      const cat=categorias.find(c=>c.nome===item.categoria);
+      const ref=await addDoc(collection(db,'itens'),{restauranteId:restaurante.id,categoriaId:cat.id,nome:item.nome,descricao:item.descricao,preco:item.preco,emoji:'🍽️',foto:null,disponivel:true,ordem:menu.length});
+      menu.push({id:ref.id,restauranteId:restaurante.id,categoriaId:cat.id,nome:item.nome,descricao:item.descricao,preco:item.preco,emoji:'🍽️',foto:null,disponivel:true,ordem:menu.length});
+    }
+    window.closeReview();renderAdmin();showToast(`${selected.length} itens importados! ✅`);
+  }catch(e){showToast('Erro: '+e.message);}
+  loading(false);
+};
+
+/* ── TOTEM ── */
+function showCatScreen(){
+  document.getElementById('screenCats').classList.add('active');
+  document.getElementById('screenItems').classList.remove('active');
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('cartBar').style.display='';
+  const avail=menu.filter(i=>i.disponivel);
+  const cats=categorias.filter(c=>avail.some(i=>i.categoriaId===c.id));
+  const grid=document.getElementById('catCardGrid');
+  if(!cats.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🍽️</div><p>Nenhum item disponível.</p></div>`;return;}
+  grid.innerHTML=cats.map(cat=>{
+    const items=avail.filter(i=>i.categoriaId===cat.id);
+    const fp=items.find(i=>i.foto);
+    const emoji=items[0]?.emoji||catEmojis[cat.nome]||'🍽️';
+    const visual=fp?`<img class="tcat-card-img" src="${fp.foto}"/>`:`<div class="tcat-card-emoji">${emoji}</div>`;
+    return `<div class="tcat-card" onclick="selectCat('${cat.id}','${cat.nome}')">
+      ${visual}<div class="tcat-card-name">${cat.nome}</div>
+      <div class="tcat-card-count">${items.length} ${items.length===1?'item':'itens'}</div>
+    </div>`;
+  }).join('');
+}
+
+window.selectCat = function(id,nome){
+  activeCat=id;
+  document.getElementById('currentCatName').textContent=nome;
+  document.getElementById('screenCats').classList.remove('active');
+  document.getElementById('screenItems').classList.add('active');
+  renderItems();
+};
+window.goBackToCats = function(){
+  document.getElementById('screenItems').classList.remove('active');
+  document.getElementById('screenCats').classList.add('active');
+};
+
+function renderItems(){
+  const avail=menu.filter(i=>i.disponivel&&i.categoriaId===activeCat);
+  const el=document.getElementById('totemItemsList');
+  if(!avail.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🍽️</div><p>Nenhum item disponível.</p></div>`;return;}
+  el.innerHTML=avail.map(i=>{
+    const qty=cart[i.id]||0;
+    let visual;
+    if(i.foto) visual=`<img class="titem-thumb" src="${i.foto}"/>`;
+    else if(i.emoji) visual=`<div class="titem-emoji">${i.emoji}</div>`;
+    else visual=`<div class="titem-no-photo">sem foto,<br>mas temos 😋</div>`;
+    return `<div class="tmenu-item ${qty>0?'in-cart':''}" id="titem-${i.id}">
+      ${visual}
+      <div class="titem-info"><div class="titem-name">${i.nome}</div><div class="titem-desc">${i.descricao||''}</div></div>
+      <div class="titem-right">
+        <span class="titem-price">${fmt(i.preco)}</span>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty('${i.id}',-1)">−</button>
+          <span class="qty-num">${qty}</span>
+          <button class="qty-btn" onclick="changeQty('${i.id}',1)">+</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateCartBar();
+}
+
+window.changeQty = function(id,delta){
+  const next=Math.max(0,(cart[id]||0)+delta);
+  if(next===0)delete cart[id];else cart[id]=next;
+  renderItems();updateCartBar();
+};
+
+function updateCartBar(){
+  const ids=Object.keys(cart);
+  const qty=ids.reduce((s,id)=>s+cart[id],0);
+  const val=ids.reduce((s,id)=>{const i=menu.find(m=>m.id===id);return s+(i?parseFloat(i.preco)*cart[id]:0);},0);
+  document.getElementById('cartCount').textContent=qty+(qty===1?' item':' itens');
+  document.getElementById('cartTotal').textContent=fmt(val);
+  document.getElementById('btnCheckout').disabled=qty===0;
+}
+
+window.openMesaModal = function(){
+  document.getElementById('mesaInput').value='';
+  document.getElementById('mesaModal').classList.add('open');
+  setTimeout(()=>document.getElementById('mesaInput').focus(),100);
+};
+window.closeMesaModal = function(){document.getElementById('mesaModal').classList.remove('open');};
+
+window.openOrderModal = function(){
+  const mesa=document.getElementById('mesaInput').value.trim();
+  if(!mesa){showToast('Digite o número da mesa!');return;}
+  mesaAtual=mesa;
+  window.closeMesaModal();
+  const ids=Object.keys(cart);let html='',total=0;
+  ids.forEach(id=>{
+    const i=menu.find(m=>m.id===id);if(!i)return;
+    const sub=parseFloat(i.preco)*cart[id];total+=sub;
+    html+=`<div class="order-line"><span>${cart[id]}× ${i.nome}</span><span>${fmt(sub)}</span></div>`;
+  });
+  html+=`<div class="order-total-line"><span class="label">Total</span><span class="amount">${fmt(total)}</span></div>`;
+  document.getElementById('orderSummary').innerHTML=html;
+  document.getElementById('orderMesaLabel').textContent=`Mesa ${mesaAtual} — revise antes de confirmar.`;
+  document.getElementById('orderModal').classList.add('open');
+};
+window.closeOrderModal = function(){document.getElementById('orderModal').classList.remove('open');};
+
+window.confirmOrder = async function(){
+  window.closeOrderModal();
+  const ids=Object.keys(cart);
+  const itensData=ids.map(id=>{const i=menu.find(m=>m.id===id);return{id,nome:i.nome,qty:cart[id],preco:i.preco};});
+  const total=itensData.reduce((s,i)=>s+parseFloat(i.preco)*i.qty,0);
+  loading(true,'Enviando pedido...');
+  try{
+    await addDoc(collection(db,'pedidos'),{
+      restauranteId:restaurante.id,mesa:mesaAtual,
+      itens:itensData,total,status:'pendente',criadoEm:serverTimestamp()
+    });
+  }catch(e){showToast('Erro ao enviar: '+e.message);loading(false);return;}
+  loading(false);
+  const code=String.fromCharCode(65+Math.floor(Math.random()*8))+String(orderCounter++).padStart(2,'0');
+  document.getElementById('orderCode').textContent=code;
+  document.getElementById('mesaConfirmada').textContent=mesaAtual;
+  document.getElementById('screenCats').classList.remove('active');
+  document.getElementById('screenItems').classList.remove('active');
+  document.getElementById('cartBar').style.display='none';
+  document.getElementById('successScreen').classList.add('show');
+  cart={};
+};
+
+window.resetTotem = function(){cart={};activeCat=null;updateCartBar();showCatScreen();};
+
+/* ── QR LOGIN ── */
+const params=new URLSearchParams(window.location.search);
+const qrSlug=params.get('r');
+if(qrSlug){
+  (async()=>{
+    loading(true,'Carregando restaurante...');
+    try{
+      const q=query(collection(db,'restaurantes'),where('slug','==',qrSlug),where('ativo','==',true));
+      const snap=await getDocs(q);
+      if(!snap.empty){
+        restaurante={id:snap.docs[0].id,...snap.docs[0].data()};
+        await loadCardapio();
+        document.getElementById('totemRestName').textContent=restaurante.nome;
+        showPage('totemPage');showCatScreen();
+      }else{showToast('Restaurante não encontrado.');}
+    }catch(e){showToast('Erro: '+e.message);}
+    loading(false);
+  })();
+}
+</script>
+</body>
+</html>
