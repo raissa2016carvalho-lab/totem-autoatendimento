@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>useTotem — Master</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#4a7c59;--green-dark:#2b4a35;--green-mid:#6a9e7a;
+      --green-light:#a8cbb5;--green-pale:#d4eadc;--green-ghost:#eef6f1;
+      --white:#fafcfb;--cream:#f4f7f5;--card:#ffffff;
+      --border:#dceae2;--text:#2b3d32;--text2:#5a7265;--text3:#8aaa96;
+      --red:#c0574a;--red-pale:#faeae8;
+    }
+    html,body{height:100%;background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--green-light);border-radius:4px}
+
+    /* LOGIN */
+    .login-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--white)}
+    .login-wrap{width:min(340px,92vw);text-align:center}
+    .login-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:28px;color:var(--text);margin-bottom:4px}
+    .login-logo span{color:var(--green)}
+    .login-sub{font-size:13px;color:var(--text3);margin-bottom:28px}
+    .login-box{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:24px;box-shadow:0 6px 24px rgba(74,124,89,.1);text-align:left}
+    .login-box h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:18px}
+    .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+    .form-group label{font-size:12px;color:var(--text2);font-weight:500}
+    .form-group input,.form-group select,.form-group textarea{background:var(--green-ghost);border:1.5px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;width:100%}
+    .form-group input:focus,.form-group select:focus{border-color:var(--green-mid);background:var(--white)}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn-primary{background:var(--green);color:#fff;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px}
+    .btn-primary:hover{background:#3a6647}
+    .login-error{font-size:12px;color:var(--red);margin-bottom:10px;display:none;padding:8px 12px;background:var(--red-pale);border-radius:8px}
+    .login-error.show{display:block}
+    .divider{border:none;border-top:1.5px solid var(--border);margin:6px 0}
+    .btn-secondary{background:var(--green-ghost);border:1.5px solid var(--border2);color:var(--green);border-radius:10px;padding:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%}
+    .btn-secondary:hover{background:var(--green-pale)}
+    .btn-danger{background:var(--red-pale);border:1.5px solid #e0b0ab;color:var(--red);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-danger:hover{background:#f5d5d2}
+    .btn-sm{background:var(--green-ghost);border:1.5px solid var(--border);color:var(--green);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;font-weight:500}
+    .btn-sm:hover{background:var(--green-pale);border-color:var(--green)}
+
+    /* MASTER */
+    .master-page{position:fixed;inset:0;display:none;flex-direction:column}
+    .master-page.active{display:flex}
+    .master-nav{background:var(--green-dark);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .master-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:#fff}
+    .master-logo span{color:var(--green-light)}
+    .master-badge{font-size:10px;font-weight:700;background:var(--green-light);color:var(--green-dark);padding:3px 9px;border-radius:20px;margin-left:8px}
+    .btn-sair{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-sair:hover{background:rgba(255,255,255,.2);color:#fff}
+
+    .master-body{flex:1;overflow-y:auto;padding:24px 28px;display:flex;gap:24px}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+    .stat-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 6px rgba(74,124,89,.06)}
+    .stat-val{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--green)}
+    .stat-label{font-size:11px;color:var(--text3);margin-top:3px}
+
+    /* COLS */
+    .col-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:0}
+    .col-side{width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:16px}
+
+    .section-title{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+    .panel{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 1px 8px rgba(74,124,89,.06)}
+
+    /* REST TABLE */
+    .rest-table{width:100%;border-collapse:collapse}
+    .rest-table th{text-align:left;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:8px 12px;border-bottom:1.5px solid var(--border)}
+    .rest-table td{padding:12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
+    .rest-table tr:last-child td{border-bottom:none}
+    .rest-table tr:hover td{background:var(--green-ghost)}
+    .rest-name{font-weight:600;color:var(--text);font-size:14px}
+    .badge-ativo{background:var(--green-ghost);color:var(--green);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700}
+    .badge-inativo{background:var(--red-pale);color:var(--red);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700}
+    .badge-pendente{background:#fdf3e3;color:var(--amber,#d48c2a);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700}
+    .actions-cell{display:flex;gap:6px;align-items:center}
+
+    /* QR modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(230,241,234,.85);display:none;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(6px)}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);border-radius:22px;padding:28px;width:min(380px,94vw);border:1.5px solid var(--border);box-shadow:0 16px 60px rgba(74,124,89,.14);animation:popIn .22s ease;text-align:center}
+    @keyframes popIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    .modal h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px}
+    .modal p{color:var(--text3);font-size:13px;margin-bottom:16px}
+    .qr-wrap{display:flex;justify-content:center;margin:16px 0}
+    .qr-url{font-size:11px;color:var(--text3);word-break:break-all;background:var(--green-ghost);padding:8px 12px;border-radius:8px;margin-bottom:16px}
+    .modal-btns{display:flex;gap:10px;justify-content:center}
+    .btn-cancel{background:var(--green-ghost);border:1.5px solid var(--border);color:var(--text2);border-radius:10px;padding:10px 20px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-cancel:hover{border-color:var(--red);color:var(--red)}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green-dark);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:500;transition:transform .3s ease;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .loading-overlay{position:fixed;inset:0;background:rgba(244,247,245,.85);display:none;align-items:center;justify-content:center;z-index:600;flex-direction:column;gap:14px;backdrop-filter:blur(4px)}
+    .loading-overlay.show{display:flex}
+    .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-overlay p{font-size:14px;color:var(--text3)}
+    --amber:#d48c2a;
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p>Carregando...</p></div>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+  <div class="login-wrap">
+    <div class="login-logo">use<span>T</span>otem</div>
+    <div class="login-sub">Painel master</div>
+    <div class="login-box">
+      <h3>Acesso restrito</h3>
+      <div class="form-group"><label>Senha master</label><input type="password" id="masterPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="login-error" id="loginError">Senha incorreta.</div>
+      <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MASTER PAGE -->
+<div class="master-page" id="masterPage">
+  <div class="master-nav">
+    <div style="display:flex;align-items:center;gap:0">
+      <div class="master-logo">use<span>T</span>otem</div>
+      <span class="master-badge">MASTER</span>
+    </div>
+    <button class="btn-sair" onclick="doLogout()">Sair</button>
+  </div>
+
+  <div style="overflow-y:auto;flex:1;padding:24px 28px;display:flex;flex-direction:column;gap:20px">
+
+    <!-- stats -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <div style="display:flex;gap:20px;align-items:flex-start">
+
+      <!-- lista restaurantes -->
+      <div style="flex:1;min-width:0">
+        <div class="panel">
+          <p class="section-title">Restaurantes</p>
+          <div style="overflow-x:auto">
+            <table class="rest-table" id="restTable">
+              <thead><tr>
+                <th>Restaurante</th><th>Usuário</th><th>Status</th><th>Pedidos hoje</th><th>Ações</th>
+              </tr></thead>
+              <tbody id="restBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- cadastrar novo -->
+      <div style="width:300px;flex-shrink:0">
+        <div class="panel">
+          <p class="section-title">Novo restaurante</p>
+          <div class="form-group"><label>Nome do restaurante *</label><input type="text" id="nNome" placeholder="Ex: Hambúrgueria do João"/></div>
+          <div class="form-group"><label>Slug (URL) *</label><input type="text" id="nSlug" placeholder="hamburgueria-joao"/></div>
+          <div class="form-group"><label>Usuário totem</label><input type="text" id="nUser" placeholder="joao"/></div>
+          <div class="form-group"><label>Senha totem</label><input type="password" id="nPass" placeholder="senha123"/></div>
+          <div class="form-group"><label>Usuário cozinha</label><input type="text" id="nCozUser" placeholder="cozinha.joao"/></div>
+          <div class="form-group"><label>Senha cozinha</label><input type="password" id="nCozPass" placeholder="cozinha123"/></div>
+          <button class="btn-primary" onclick="criarRestaurante()">+ Criar restaurante</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal">
+    <h3 id="qrTitle">QR Code</h3>
+    <p id="qrSub">Imprima e coloque nas mesas do restaurante</p>
+    <div class="qr-url" id="qrUrl"></div>
+    <div class="qr-wrap"><div id="qrCode"></div></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeQR()">Fechar</button>
+      <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="printQR()">🖨 Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://tqryqyumqtvoyaxabnad.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxcnlxeXVtcXR2b3lheGFibmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2Mzk3NTYsImV4cCI6MjA5MzIxNTc1Nn0.cZ1Nh-u7IfVtV2oxZDKkor8Lsoqi7jPoYRosiSPfo6Q';
+const MASTER_PASS='usetotem2024';
+
+async function sb(path,opts={}){
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation',...opts.headers},
+    ...opts
+  });
+  const text=await res.text();
+  return text?JSON.parse(text):[];
+}
+
+let restaurantes=[];
+function fmt(v){return'R$ '+parseFloat(v||0).toFixed(2).replace('.',',')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function loading(show){document.getElementById('loadingOverlay').classList.toggle('show',show);}
+
+function doLogin(){
+  const p=document.getElementById('masterPass').value;
+  if(p===MASTER_PASS){
+    document.getElementById('loginPage').style.display='none';
+    document.getElementById('masterPage').classList.add('active');
+    loadAll();
+  }else{
+    document.getElementById('loginError').classList.add('show');
+  }
+}
+function doLogout(){
+  document.getElementById('loginPage').style.display='';
+  document.getElementById('masterPage').classList.remove('active');
+  document.getElementById('masterPass').value='';
+}
+
+async function loadAll(){
+  loading(true);
+  try{
+    restaurantes=await sb('restaurantes?order=criado_em.desc&select=*');
+    const hoje=new Date().toISOString().split('T')[0];
+    const pedidosHoje=await sb(`pedidos?criado_em=gte.${hoje}T00:00:00&select=restaurante_id`);
+    renderStats(pedidosHoje);
+    renderTable(pedidosHoje);
+  }catch(e){showToast('Erro: '+e.message);}
+  loading(false);
+}
+
+function renderStats(pedidos){
+  const ativos=restaurantes.filter(r=>r.ativo).length;
+  const inativos=restaurantes.filter(r=>!r.ativo).length;
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${restaurantes.length}</div><div class="stat-label">Total restaurantes</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${ativos}</div><div class="stat-label">Ativos</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--red)">${inativos}</div><div class="stat-label">Inativos</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:#d48c2a">${pedidos.length}</div><div class="stat-label">Pedidos hoje</div></div>`;
+}
+
+function renderTable(pedidos){
+  const body=document.getElementById('restBody');
+  if(!restaurantes.length){body.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text3)">Nenhum restaurante cadastrado.</td></tr>`;return;}
+  body.innerHTML=restaurantes.map(r=>{
+    const np=pedidos.filter(p=>p.restaurante_id===r.id).length;
+    const badge=r.ativo?'<span class="badge-ativo">Ativo</span>':'<span class="badge-inativo">Inativo</span>';
+    return `<tr>
+      <td><div class="rest-name">${r.nome}</div><div style="font-size:11px;color:var(--text3)">${r.slug}</div></td>
+      <td>${r.usuario}</td>
+      <td>${badge}</td>
+      <td>${np} pedidos</td>
+      <td><div class="actions-cell">
+        <button class="btn-sm" onclick="showQR('${r.id}','${r.nome}','${r.slug}')">QR</button>
+        <button class="btn-sm" onclick="toggleAtivo('${r.id}',${r.ativo})">${r.ativo?'Desativar':'Ativar'}</button>
+        <button class="btn-danger" onclick="deletarRestaurante('${r.id}','${r.nome}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function criarRestaurante(){
+  const nome=document.getElementById('nNome').value.trim();
+  const slug=document.getElementById('nSlug').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const user=document.getElementById('nUser').value.trim()||slug;
+  const pass=document.getElementById('nPass').value||'1234';
+  const cozUser=document.getElementById('nCozUser').value.trim()||('cozinha.'+slug);
+  const cozPass=document.getElementById('nCozPass').value||'1234';
+  if(!nome||!slug){showToast('Nome e slug são obrigatórios!');return;}
+  loading(true);
+  try{
+    const rows=await sb('restaurantes',{method:'POST',body:JSON.stringify({nome,slug,usuario:user,senha:pass,usuario_cozinha:cozUser,senha_cozinha:cozPass,ativo:true})});
+    restaurantes.unshift(rows[0]);
+    ['nNome','nSlug','nUser','nPass','nCozUser','nCozPass'].forEach(id=>document.getElementById(id).value='');
+    renderStats([]);renderTable([]);
+    showToast('Restaurante criado! ✅');
+    showQR(rows[0].id,rows[0].nome,rows[0].slug);
+  }catch(e){showToast('Erro: '+e.message);}
+  loading(false);
+}
+
+async function toggleAtivo(id,atual){
+  try{
+    await sb(`restaurantes?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({ativo:!atual})});
+    const r=restaurantes.find(r=>r.id===id);if(r)r.ativo=!atual;
+    renderStats([]);renderTable([]);
+    showToast(!atual?'Restaurante ativado!':'Restaurante desativado.');
+  }catch(e){showToast('Erro: '+e.message);}
+}
+
+async function deletarRestaurante(id,nome){
+  if(!confirm(`Excluir "${nome}" permanentemente? Todos os dados serão apagados.`))return;
+  try{
+    await sb(`restaurantes?id=eq.${id}`,{method:'DELETE'});
+    restaurantes=restaurantes.filter(r=>r.id!==id);
+    renderStats([]);renderTable([]);
+    showToast('Restaurante excluído.');
+  }catch(e){showToast('Erro: '+e.message);}
+}
+
+function showQR(id,nome,slug){
+  const baseUrl=window.location.origin;
+  const url=`${baseUrl}/?r=${slug}`;
+  document.getElementById('qrTitle').textContent=nome;
+  document.getElementById('qrSub').textContent='QR Code para as mesas do restaurante';
+  document.getElementById('qrUrl').textContent=url;
+  document.getElementById('qrCode').innerHTML='';
+  new QRCode(document.getElementById('qrCode'),{text:url,width:180,height:180,colorDark:'#2b4a35',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+  document.getElementById('qrModal').classList.add('open');
+}
+function closeQR(){document.getElementById('qrModal').classList.remove('open');}
+function printQR(){
+  const url=document.getElementById('qrUrl').textContent;
+  const nome=document.getElementById('qrTitle').textContent;
+  const w=window.open('','_blank','width=400,height=500');
+  w.document.write(`<html><head><title>QR Code — ${nome}</title><style>body{font-family:Arial,sans-serif;text-align:center;padding:40px}h2{color:#2b4a35;margin-bottom:8px}p{color:#7a9a86;font-size:13px;margin-bottom:20px}img{border:2px solid #dceae2;border-radius:12px;padding:12px}.url{font-size:11px;color:#8aaa96;margin-top:16px;word-break:break-all}</style></head><body><h2>${nome}</h2><p>Escaneie para fazer seu pedido</p><div id="qr"></div><div class="url">${url}</div><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script><script>new QRCode(document.getElementById('qr'),{text:'${url}',width:200,height:200,colorDark:'#2b4a35',colorLight:'#ffffff'});setTimeout(()=>window.print(),600);<\/script></body></html>`);
+  w.document.close();
+}
+</script>
+</body>
+</html>
