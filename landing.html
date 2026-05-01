@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>useTotem — Autoatendimento para restaurantes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#4a7c59;--green-dark:#2b4a35;--green-mid:#6a9e7a;
+      --green-light:#a8cbb5;--green-pale:#d4eadc;--green-ghost:#eef6f1;
+      --white:#fafcfb;--cream:#f4f7f5;--text:#1e2e24;--text2:#4a6354;--text3:#8aaa96;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--text);overflow-x:hidden}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--green-light);border-radius:4px}
+
+    /* ── NAV ── */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      padding:16px 48px;display:flex;align-items:center;justify-content:space-between;
+      background:rgba(250,252,251,0.85);backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(168,203,181,0.3);
+      transition:all .3s;
+    }
+    .nav-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:22px;color:var(--text);text-decoration:none}
+    .nav-logo span{color:var(--green)}
+    .nav-links{display:flex;align-items:center;gap:32px}
+    .nav-links a{font-size:14px;color:var(--text2);text-decoration:none;font-weight:400;transition:color .2s}
+    .nav-links a:hover{color:var(--green)}
+    .btn-nav{background:var(--green);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;text-decoration:none}
+    .btn-nav:hover{background:var(--green-dark);transform:translateY(-1px)}
+
+    /* ── HERO ── */
+    .hero{
+      min-height:100vh;display:flex;align-items:center;
+      padding:120px 48px 80px;position:relative;overflow:hidden;
+      background:var(--white);
+    }
+    .hero-bg{
+      position:absolute;inset:0;z-index:0;
+      background:
+        radial-gradient(ellipse 60% 50% at 70% 40%, rgba(168,203,181,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(212,234,220,0.3) 0%, transparent 50%);
+    }
+    .hero-dots{position:absolute;inset:0;z-index:0;background-image:radial-gradient(circle,rgba(74,124,89,0.08) 1px,transparent 1px);background-size:32px 32px}
+    .hero-content{position:relative;z-index:1;max-width:620px}
+    .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--green-ghost);border:1px solid var(--green-pale);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:28px}
+    .hero-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(42px,6vw,72px);font-weight:900;line-height:1.0;color:var(--text);letter-spacing:-2px;margin-bottom:24px}
+    .hero h1 em{font-style:italic;color:var(--green)}
+    .hero p{font-size:18px;font-weight:300;color:var(--text2);line-height:1.7;max-width:480px;margin-bottom:36px}
+    .hero p strong{font-weight:600;color:var(--text)}
+    .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+    .btn-hero-primary{background:var(--green);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .25s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(74,124,89,0.3)}
+    .btn-hero-primary:hover{background:var(--green-dark);transform:translateY(-2px);box-shadow:0 12px 32px rgba(74,124,89,0.4)}
+    .btn-hero-secondary{background:transparent;color:var(--text);border:1.5px solid var(--green-pale);border-radius:12px;padding:14px 28px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .25s;text-decoration:none}
+    .btn-hero-secondary:hover{border-color:var(--green);color:var(--green)}
+    .hero-visual{position:absolute;right:48px;top:50%;transform:translateY(-50%);z-index:1;display:flex;gap:16px;align-items:center}
+
+    /* MOCK TABLET */
+    .mock-tablet{
+      width:220px;background:var(--white);border-radius:20px;
+      border:2px solid var(--green-pale);overflow:hidden;
+      box-shadow:0 24px 64px rgba(74,124,89,0.15),0 0 0 8px rgba(212,234,220,0.4);
+    }
+    .mock-header{background:var(--green);padding:14px 16px}
+    .mock-rest{font-family:'Playfair Display',serif;font-weight:700;font-size:14px;color:#fff}
+    .mock-sub{font-size:10px;color:rgba(255,255,255,.6);margin-top:2px}
+    .mock-body{padding:12px}
+    .mock-greeting{font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px}
+    .mock-cats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+    .mock-cat{background:var(--green-ghost);border:1px solid var(--green-pale);border-radius:10px;padding:12px 8px;text-align:center}
+    .mock-cat-emoji{font-size:20px;display:block;margin-bottom:4px}
+    .mock-cat-name{font-size:9px;font-weight:600;color:var(--text)}
+    .mock-item{background:var(--cream);border-radius:8px;padding:8px;display:flex;gap:8px;align-items:center;margin-bottom:6px}
+    .mock-item-emoji{font-size:18px}
+    .mock-item-info{flex:1}
+    .mock-item-name{font-size:9px;font-weight:600;color:var(--text)}
+    .mock-item-price{font-size:9px;color:var(--green);font-weight:600}
+    .mock-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px;font-size:9px;font-weight:600;width:100%;text-align:center;margin-top:8px}
+    .mock-footer{background:var(--green-dark);padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+    .mock-total{font-size:12px;font-weight:700;color:#fff}
+    .mock-ver{background:var(--green);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:9px;font-weight:600}
+
+    /* MOCK COZINHA */
+    .mock-kitchen{
+      width:180px;background:var(--green-dark);border-radius:16px;
+      overflow:hidden;box-shadow:0 16px 48px rgba(43,74,53,0.25);
+    }
+    .mock-k-header{background:#1e3328;padding:10px 12px;border-bottom:1px solid #3a6647}
+    .mock-k-title{font-size:11px;font-weight:600;color:var(--green-light)}
+    .mock-k-body{padding:10px}
+    .mock-order{background:#1e3328;border:1px solid #3a6647;border-radius:8px;padding:10px;margin-bottom:8px}
+    .mock-order.novo{border-color:var(--green-mid)}
+    .mock-order-mesa{font-size:13px;font-weight:700;color:#fff;font-family:'Playfair Display',serif}
+    .mock-order-item{font-size:9px;color:var(--green-light);margin-top:4px}
+    .mock-order-btn{background:var(--green);color:#fff;border:none;border-radius:5px;padding:4px 8px;font-size:8px;font-weight:600;margin-top:6px;width:100%}
+
+    /* ── STATS ── */
+    .stats{background:var(--green-dark);padding:60px 48px}
+    .stats-inner{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px}
+    .stat-item{text-align:center}
+    .stat-num{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:var(--green-light);line-height:1}
+    .stat-label{font-size:14px;color:rgba(255,255,255,.55);margin-top:6px;font-weight:300}
+
+    /* ── HOW IT WORKS ── */
+    .section{padding:100px 48px;max-width:1100px;margin:0 auto}
+    .section-badge{display:inline-block;background:var(--green-ghost);border:1px solid var(--green-pale);border-radius:20px;padding:5px 16px;font-size:11px;font-weight:700;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px}
+    .section-title{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);font-weight:900;color:var(--text);letter-spacing:-1.5px;margin-bottom:14px;line-height:1.05}
+    .section-title em{font-style:italic;color:var(--green)}
+    .section-sub{font-size:17px;font-weight:300;color:var(--text2);line-height:1.65;max-width:500px;margin-bottom:60px}
+
+    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+    .step{background:var(--cream);border:1.5px solid var(--green-pale);border-radius:20px;padding:32px;position:relative;transition:all .25s}
+    .step:hover{border-color:var(--green-mid);transform:translateY(-4px);box-shadow:0 16px 40px rgba(74,124,89,0.1)}
+    .step-num{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:var(--green-pale);line-height:1;margin-bottom:16px}
+    .step-emoji{font-size:32px;margin-bottom:12px;display:block}
+    .step-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px}
+    .step-desc{font-size:14px;color:var(--text2);line-height:1.6;font-weight:300}
+
+    /* ── FEATURES ── */
+    .features-wrap{background:var(--cream);padding:100px 48px}
+    .features-inner{max-width:1100px;margin:0 auto}
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+    .feature-card{background:var(--white);border:1.5px solid var(--green-pale);border-radius:18px;padding:28px;transition:all .2s}
+    .feature-card:hover{border-color:var(--green-mid);box-shadow:0 8px 24px rgba(74,124,89,0.08)}
+    .feature-icon{font-size:32px;margin-bottom:14px;display:block}
+    .feature-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px}
+    .feature-desc{font-size:13px;color:var(--text2);line-height:1.6;font-weight:300}
+
+    /* ── PRICING ── */
+    .pricing-wrap{padding:100px 48px;max-width:1100px;margin:0 auto}
+    .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:700px;margin:0 auto}
+    .plan{background:var(--cream);border:1.5px solid var(--green-pale);border-radius:20px;padding:32px;transition:all .2s}
+    .plan.destaque{background:var(--green-dark);border-color:var(--green);box-shadow:0 16px 48px rgba(74,124,89,0.25)}
+    .plan-badge{font-size:10px;font-weight:700;color:var(--green);background:var(--green-ghost);padding:3px 10px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;display:inline-block;margin-bottom:16px}
+    .plan.destaque .plan-badge{background:rgba(168,203,181,0.2);color:var(--green-light)}
+    .plan-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+    .plan.destaque .plan-name{color:#fff}
+    .plan-price{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;color:var(--green);line-height:1;margin-bottom:4px}
+    .plan.destaque .plan-price{color:var(--green-light)}
+    .plan-per{font-size:13px;color:var(--text3);margin-bottom:24px}
+    .plan.destaque .plan-per{color:rgba(255,255,255,.45)}
+    .plan-items{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+    .plan-item{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px;font-weight:300}
+    .plan.destaque .plan-item{color:rgba(255,255,255,.7)}
+    .plan-item::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+    .plan.destaque .plan-item::before{color:var(--green-light)}
+    .btn-plan{background:var(--green);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%;text-decoration:none;display:block;text-align:center}
+    .btn-plan:hover{background:var(--green-dark)}
+    .plan .btn-plan{background:var(--green)}
+    .plan.destaque .btn-plan{background:var(--green-light);color:var(--green-dark)}
+    .plan.destaque .btn-plan:hover{background:#c8e8d3}
+
+    /* ── CTA FINAL ── */
+    .cta-section{background:var(--green-dark);padding:100px 48px;text-align:center;position:relative;overflow:hidden}
+    .cta-section::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(168,203,181,0.08) 1px,transparent 1px);background-size:28px 28px}
+    .cta-blob{position:absolute;width:400px;height:400px;border-radius:50%;background:rgba(74,124,89,0.3);top:-100px;right:-100px}
+    .cta-blob2{position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(74,124,89,0.2);bottom:-80px;left:-60px}
+    .cta-content{position:relative;z-index:1;max-width:600px;margin:0 auto}
+    .cta-section h2{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);font-weight:900;color:#fff;letter-spacing:-1.5px;margin-bottom:14px;line-height:1.05}
+    .cta-section h2 em{font-style:italic;color:var(--green-light)}
+    .cta-section p{font-size:17px;font-weight:300;color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:36px}
+    .btn-cta{background:var(--green-light);color:var(--green-dark);border:none;border-radius:12px;padding:16px 40px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .25s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+    .btn-cta:hover{background:#c8e8d3;transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,0.3)}
+
+    /* ── FOOTER ── */
+    footer{background:#1e3328;padding:40px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:gap}
+    .footer-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:#fff}
+    .footer-logo span{color:var(--green-light)}
+    .footer-text{font-size:12px;color:rgba(255,255,255,.3)}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){
+      nav{padding:14px 20px}
+      .nav-links{display:none}
+      .hero{padding:100px 24px 60px;flex-direction:column}
+      .hero-visual{position:relative;right:auto;top:auto;transform:none;margin-top:40px;justify-content:center;flex-wrap:wrap}
+      .section,.pricing-wrap{padding:60px 24px}
+      .features-wrap{padding:60px 24px}
+      .stats{padding:40px 24px}
+      .cta-section{padding:60px 24px}
+      footer{padding:28px 24px;flex-direction:column;gap:12px;text-align:center}
+      .mock-tablet{width:180px}
+      .mock-kitchen{width:150px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">use<span>T</span>otem</a>
+  <div class="nav-links">
+    <a href="#como-funciona">Como funciona</a>
+    <a href="#funcionalidades">Funcionalidades</a>
+    <a href="#precos">Preços</a>
+  </div>
+  <a href="cadastro.html" class="btn-nav">Testar grátis →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-dots"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Novo — feito no Brasil 🇧🇷
+    </div>
+    <h1>O cardápio digital<br>que <em>seu restaurante</em><br>merecia.</h1>
+    <p>O cliente chega, escaneia o QR code, escolhe os pratos e confirma o pedido. <strong>Vai direto pra cozinha.</strong> Sem erro. Sem espera. Sem complicação.</p>
+    <div class="hero-btns">
+      <a href="cadastro.html" class="btn-hero-primary">🌿 Testar grátis agora</a>
+      <a href="#como-funciona" class="btn-hero-secondary">Ver como funciona</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <!-- mock totem -->
+    <div class="mock-tablet">
+      <div class="mock-header">
+        <div class="mock-rest">Hambúrgueria</div>
+        <div class="mock-sub">Toque para começar</div>
+      </div>
+      <div class="mock-body">
+        <div class="mock-greeting">O que vai ser hoje?</div>
+        <div class="mock-cats">
+          <div class="mock-cat"><span class="mock-cat-emoji">🍔</span><div class="mock-cat-name">Lanches</div></div>
+          <div class="mock-cat"><span class="mock-cat-emoji">🥤</span><div class="mock-cat-name">Bebidas</div></div>
+          <div class="mock-cat"><span class="mock-cat-emoji">🍟</span><div class="mock-cat-name">Porções</div></div>
+          <div class="mock-cat"><span class="mock-cat-emoji">🍰</span><div class="mock-cat-name">Sobremesas</div></div>
+        </div>
+        <div class="mock-item">
+          <span class="mock-item-emoji">🍔</span>
+          <div class="mock-item-info">
+            <div class="mock-item-name">X-Burguer Artesanal</div>
+            <div class="mock-item-price">R$ 32,90</div>
+          </div>
+        </div>
+        <div class="mock-btn">+ Adicionar</div>
+      </div>
+      <div class="mock-footer">
+        <div class="mock-total">R$ 32,90</div>
+        <button class="mock-ver">Ver pedido →</button>
+      </div>
+    </div>
+    <!-- mock cozinha -->
+    <div class="mock-kitchen">
+      <div class="mock-k-header">
+        <div class="mock-k-title">👨‍🍳 Cozinha</div>
+      </div>
+      <div class="mock-k-body">
+        <div class="mock-order novo">
+          <div class="mock-order-mesa">Mesa 4</div>
+          <div class="mock-order-item">2× X-Burguer</div>
+          <div class="mock-order-item">1× Suco Natural</div>
+          <button class="mock-order-btn">✔ Pronto</button>
+        </div>
+        <div class="mock-order">
+          <div class="mock-order-mesa">Mesa 7</div>
+          <div class="mock-order-item">1× Batata Frita</div>
+          <button class="mock-order-btn">✔ Pronto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat-item"><div class="stat-num">5min</div><div class="stat-label">para configurar do zero</div></div>
+    <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">web — sem instalar app</div></div>
+    <div class="stat-item"><div class="stat-num">R$79</div><div class="stat-label">por mês, sem contrato</div></div>
+    <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">tablets simultâneos</div></div>
+  </div>
+</div>
+
+<!-- COMO FUNCIONA -->
+<section id="como-funciona">
+  <div class="section">
+    <div class="section-badge">Como funciona</div>
+    <h2 class="section-title">Simples assim.<br><em>Mesmo.</em></h2>
+    <p class="section-sub">Em 3 passos o seu restaurante tem autoatendimento funcionando de verdade.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <span class="step-emoji">📋</span>
+        <div class="step-title">Cadastre o cardápio</div>
+        <div class="step-desc">Adicione categorias, pratos, fotos e preços pelo painel admin. Ou importe tudo de uma planilha Excel em segundos.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <span class="step-emoji">📱</span>
+        <div class="step-title">Coloque o QR na mesa</div>
+        <div class="step-desc">Gere o QR code único do seu restaurante, imprima e coloque nas mesas. O cliente escaneia e já abre o cardápio.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <span class="step-emoji">🍳</span>
+        <div class="step-title">Receba os pedidos</div>
+        <div class="step-desc">A cozinha abre a tela de pedidos em qualquer tablet ou celular e vê cada pedido chegando em tempo real, com som de notificação.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCIONALIDADES -->
+<section id="funcionalidades" class="features-wrap">
+  <div class="features-inner">
+    <div class="section-badge">Funcionalidades</div>
+    <h2 class="section-title">Tudo que você<br><em>precisa.</em></h2>
+    <p class="section-sub" style="margin-bottom:48px">Sem cobrar a mais por cada recurso.</p>
+    <div class="features-grid">
+      <div class="feature-card"><span class="feature-icon">📷</span><div class="feature-title">Fotos dos pratos</div><div class="feature-desc">Adicione fotos reais dos seus pratos. Cliente que vê, pede mais. Ticket médio maior automaticamente.</div></div>
+      <div class="feature-card"><span class="feature-icon">⚡</span><div class="feature-title">Pedidos em tempo real</div><div class="feature-desc">Assim que o cliente confirma, o pedido aparece na tela da cozinha na hora. Sem digitação, sem papel.</div></div>
+      <div class="feature-card"><span class="feature-icon">📊</span><div class="feature-title">Importação por planilha</div><div class="feature-desc">Tem o cardápio numa planilha Excel? Importe tudo de uma vez e revise item por item antes de publicar.</div></div>
+      <div class="feature-card"><span class="feature-icon">📱</span><div class="feature-title">QR code por restaurante</div><div class="feature-desc">Cada restaurante tem seu QR único. Coloca na mesa, no balcão, no cardápio impresso — onde quiser.</div></div>
+      <div class="feature-card"><span class="feature-icon">🔐</span><div class="feature-title">Login separado por setor</div><div class="feature-desc">O admin gerencia o cardápio. A cozinha vê os pedidos. Cada um com seu próprio usuário e senha.</div></div>
+      <div class="feature-card"><span class="feature-icon">🌿</span><div class="feature-title">Qualquer tablet funciona</div><div class="feature-desc">Não precisa comprar equipamento específico. Funciona em qualquer tablet, celular ou computador com navegador.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PREÇOS -->
+<section id="precos">
+  <div class="pricing-wrap">
+    <div style="text-align:center;margin-bottom:60px">
+      <div class="section-badge">Preços</div>
+      <h2 class="section-title">Sem surpresa.<br><em>Sem contrato.</em></h2>
+      <p class="section-sub" style="margin:0 auto">Cancela quando quiser. Sem taxa de adesão.</p>
+    </div>
+    <div class="plans">
+      <div class="plan">
+        <div class="plan-badge">Básico</div>
+        <div class="plan-name">Básico</div>
+        <div class="plan-price">R$79</div>
+        <div class="plan-per">por mês</div>
+        <ul class="plan-items">
+          <li class="plan-item">Cardápio digital com fotos</li>
+          <li class="plan-item">QR code para as mesas</li>
+          <li class="plan-item">Pedidos na cozinha</li>
+          <li class="plan-item">1 restaurante</li>
+          <li class="plan-item">Suporte via email</li>
+        </ul>
+        <a href="cadastro.html" class="btn-plan">Começar grátis</a>
+      </div>
+      <div class="plan destaque">
+        <div class="plan-badge">⭐ Mais escolhido</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">R$149</div>
+        <div class="plan-per">por mês</div>
+        <ul class="plan-items">
+          <li class="plan-item">Tudo do plano Básico</li>
+          <li class="plan-item">Tablets ilimitados</li>
+          <li class="plan-item">Importação por planilha</li>
+          <li class="plan-item">Personalização da marca</li>
+          <li class="plan-item">Suporte prioritário WhatsApp</li>
+        </ul>
+        <a href="cadastro.html" class="btn-plan">Começar grátis</a>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:24px">🌿 3 meses grátis para os 5 primeiros restaurantes parceiros</p>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <div class="cta-blob"></div>
+  <div class="cta-blob2"></div>
+  <div class="cta-content">
+    <h2>Seu restaurante merece<br><em>isso hoje.</em></h2>
+    <p>Configure em 5 minutos. Coloca o tablet na mesa. Deixa o cliente pedir.</p>
+    <a href="cadastro.html" class="btn-cta">🌿 Testar grátis agora</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">use<span>T</span>otem</div>
+  <div class="footer-text">© 2025 useTotem · Feito no Brasil 🇧🇷</div>
+</footer>
+
+</body>
+</html>
