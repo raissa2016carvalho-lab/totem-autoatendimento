@@ -533,6 +533,8 @@ window.preencherDoLead = function(id){
   document.getElementById('nNome').scrollIntoView({behavior:'smooth'});
   showToast('Dados preenchidos! Revise e clique em Criar.');
 };
+
+window.criarRestaurante = async function(){
   const nome=document.getElementById('nNome').value.trim();
   const slug=document.getElementById('nSlug').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
   const user=document.getElementById('nUser').value.trim()||slug;
