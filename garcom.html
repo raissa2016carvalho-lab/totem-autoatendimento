@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>useTotem — Garçom</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--green:#4a7c59;--green-dark:#2b4a35;--green-mid:#6a9e7a;--green-light:#a8cbb5;--green-pale:#d4eadc;--green-ghost:#eef6f1;--white:#fafcfb;--cream:#f4f7f5;--card:#ffffff;--border:#dceae2;--text:#2b3d32;--text2:#5a7265;--text3:#8aaa96;--red:#c0574a;--amber:#d48c2a;}
+    html,body{height:100%;background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--green-light);border-radius:4px}
+    .page{position:fixed;inset:0;display:none;flex-direction:column}.page.active{display:flex}
+
+    /* LOGIN */
+    #loginPage{align-items:center;justify-content:center;background:var(--white)}
+    .login-wrap{width:min(340px,92vw)}
+    .login-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:28px;color:var(--text);text-align:center;margin-bottom:4px}
+    .login-logo span{color:var(--green)}
+    .login-sub{font-size:13px;color:var(--text3);text-align:center;margin-bottom:6px}
+    .login-sub2{font-size:12px;color:var(--text3);text-align:center;margin-bottom:24px;background:var(--green-ghost);border-radius:8px;padding:8px;border:1px solid var(--border)}
+    .login-box{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:24px;box-shadow:0 6px 24px rgba(74,124,89,.1)}
+    .login-box h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;margin-bottom:18px}
+    .form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+    .form-group label{font-size:12px;color:var(--text2);font-weight:500}
+    .form-group input{background:var(--green-ghost);border:1.5px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;width:100%}
+    .form-group input:focus{border-color:var(--green-mid);background:var(--white)}
+    .btn-primary{background:var(--green);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%}
+    .btn-primary:hover{background:#3a6647}
+    .login-error{font-size:12px;color:var(--red);margin-bottom:10px;display:none;padding:8px 12px;background:#faeae8;border-radius:8px}
+    .login-error.show{display:block}
+
+    /* GARÇOM PAGE */
+    .garcom-nav{background:var(--green-dark);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .garcom-logo{font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:#fff}
+    .garcom-logo span{color:var(--green-light)}
+    .garcom-rest{font-size:12px;color:var(--green-light)}
+    .garcom-nav-right{display:flex;align-items:center;gap:10px}
+    .status-dot{width:9px;height:9px;border-radius:50%;background:#2ecc71;animation:pulse 2s infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .status-label{font-size:12px;color:rgba(255,255,255,.55)}
+    .btn-sair{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-sair:hover{background:rgba(255,255,255,.2);color:#fff}
+
+    /* TABS */
+    .garcom-tabs{display:flex;background:var(--green-dark);border-top:1px solid rgba(255,255,255,.1);flex-shrink:0}
+    .garcom-tab{flex:1;padding:10px;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:'DM Sans',sans-serif;background:none;border-top:none;border-left:none;border-right:none;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+    .garcom-tab.active{color:#fff;border-bottom-color:var(--green-light)}
+    .garcom-tab:hover:not(.active){color:rgba(255,255,255,.8)}
+    .tab-badge{background:var(--amber);color:#fff;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:700}
+    .tab-badge.green{background:var(--green)}
+
+    .garcom-body{flex:1;overflow-y:auto;padding:16px}
+    .garcom-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3)}
+    .garcom-empty-icon{font-size:56px;opacity:.3}
+    .garcom-empty p{font-size:14px;font-weight:300;text-align:center}
+
+    .orders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+
+    /* CARD ENTREGA */
+    .delivery-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(74,124,89,.07);animation:slideIn .3s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .delivery-card.pronto{border-color:var(--green)}
+    .delivery-card.conta{border-color:var(--amber)}
+    .delivery-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+    .delivery-header.pronto{background:var(--green-dark)}
+    .delivery-header.conta{background:#b8740a}
+    .delivery-mesa{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff}
+    .delivery-proto{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px}
+    .delivery-time{font-size:11px;color:rgba(255,255,255,.55)}
+    .delivery-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px}
+    .delivery-badge.pronto{background:rgba(168,203,181,.3);color:#fff}
+    .delivery-badge.conta{background:rgba(255,255,255,.2);color:#fff}
+    .delivery-items{padding:14px 16px}
+    .delivery-item-row{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2)}
+    .delivery-item-row:last-child{border-bottom:none}
+    .delivery-qty{font-weight:700;color:var(--green);min-width:24px}
+    .delivery-footer{padding:12px 16px;border-top:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .delivery-total{font-size:14px;font-weight:700;color:var(--text)}
+    .btn-entregue{background:var(--green);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .btn-entregue:hover{background:#3a6647}
+    .btn-entregue.conta{background:var(--amber)}
+    .btn-entregue.conta:hover{background:#b8740a}
+
+    /* ENTREGUES TAB */
+    .entregue-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;background:var(--card);border:1.5px solid var(--border);margin-bottom:8px}
+    .entregue-info{flex:1}
+    .entregue-mesa{font-size:13px;font-weight:600;color:var(--text)}
+    .entregue-meta{font-size:11px;color:var(--text3);margin-top:2px}
+    .entregue-val{font-size:14px;font-weight:700;color:var(--green)}
+    .badge-entregue{background:var(--green-ghost);color:var(--green);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;margin-left:8px}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--green-dark);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:500;transition:transform .3s ease;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .loading-overlay{position:fixed;inset:0;background:rgba(244,247,245,.85);display:none;align-items:center;justify-content:center;z-index:600;flex-direction:column;gap:14px;backdrop-filter:blur(4px)}
+    .loading-overlay.show{display:flex}
+    .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-overlay p{font-size:14px;color:var(--text3)}
+  </style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p>Carregando...</p></div>
+
+<!-- LOGIN -->
+<div class="page active" id="loginPage">
+  <div class="login-wrap">
+    <div class="login-logo">use<span>T</span>otem</div>
+    <div class="login-sub">Tela do garçom</div>
+    <div class="login-sub2">🛎 Use o usuário e senha do <strong>garçom</strong> do seu restaurante</div>
+    <div class="login-box">
+      <h3>Entrar</h3>
+      <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" autocomplete="off"/></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="loginPass" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="login-error" id="loginError">Usuário ou senha incorretos.</div>
+      <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- GARÇOM PAGE -->
+<div class="page" id="garcomPage">
+  <div class="garcom-nav">
+    <div>
+      <div class="garcom-logo">use<span>T</span>otem <span style="font-family:'DM Sans',sans-serif;font-weight:400;font-size:13px;color:rgba(255,255,255,.5)">— Garçom</span></div>
+      <div class="garcom-rest" id="garcomRestName"></div>
+    </div>
+    <div class="garcom-nav-right">
+      <div class="status-dot"></div>
+      <div class="status-label">Tempo real</div>
+      <button class="btn-sair" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="garcom-tabs">
+    <button class="garcom-tab active" id="tabEntregar" onclick="switchTab('entregar')">
+      🍽️ Para entregar
+      <span class="tab-badge green" id="countEntregar" style="display:none">0</span>
+    </button>
+    <button class="garcom-tab" id="tabContas" onclick="switchTab('contas')">
+      🧾 Contas
+      <span class="tab-badge" id="countContas" style="display:none">0</span>
+    </button>
+    <button class="garcom-tab" id="tabEntregues" onclick="switchTab('entregues')">
+      ✅ Entregues hoje
+    </button>
+  </div>
+
+  <div class="garcom-body" id="garcomBody">
+    <div class="garcom-empty" id="garcomEmpty">
+      <div class="garcom-empty-icon">🛎️</div>
+      <p>Aguardando pedidos prontos...</p>
+    </div>
+    <div class="orders-grid" id="ordersGrid" style="display:none"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, getDocs, updateDoc, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDa0_0Y_t-Fp9drHLYLCN3kaAWzglnNVQY",
+  authDomain:"usetotem.firebaseapp.com",
+  projectId:"usetotem",
+  storageBucket:"usetotem.firebasestorage.app",
+  messagingSenderId:"592451036665",
+  appId:"1:592451036665:web:283441a57b3a5b59a68928"
+};
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+let restaurante=null;
+let unsubscribe=null;
+let pedidosCount=0;
+let tabAtual='entregar';
+let todosPedidos=[];
+
+function fmt(v){return 'R$ '+parseFloat(v||0).toFixed(2).replace('.',',')}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function loading(show){document.getElementById('loadingOverlay').classList.toggle('show',show);}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+function playNotif(){
+  try{
+    const ctx=new AudioContext();
+    [660,880,1100].forEach((freq,i)=>{
+      setTimeout(()=>{
+        const osc=ctx.createOscillator(),gain=ctx.createGain();
+        osc.connect(gain);gain.connect(ctx.destination);
+        osc.frequency.value=freq;gain.gain.value=0.25;
+        osc.start();osc.stop(ctx.currentTime+0.15);
+      },i*150);
+    });
+  }catch(e){}
+}
+
+window.doLogin=async function(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!user||!pass){showToast('Preencha usuário e senha');return;}
+  loading(true);
+  try{
+    const {getDocs:gd,query:q,collection:col,where:w}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const snap=await gd(q(col(db,'restaurantes'),w('usuarioGarcom','==',user),w('senhaGarcom','==',pass),w('ativo','==',true)));
+    if(snap.empty){document.getElementById('loginError').classList.add('show');loading(false);return;}
+    restaurante={id:snap.docs[0].id,...snap.docs[0].data()};
+    localStorage.setItem('usetotem_garcom',JSON.stringify({user,pass}));
+    document.getElementById('garcomRestName').textContent=restaurante.nome;
+    showPage('garcomPage');
+    startListener();
+  }catch(e){showToast('Erro: '+e.message);}
+  loading(false);
+};
+
+window.doLogout=function(){
+  if(unsubscribe)unsubscribe();
+  localStorage.removeItem('usetotem_garcom');
+  restaurante=null;pedidosCount=0;todosPedidos=[];
+  showPage('loginPage');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+};
+
+// auto-login
+(async()=>{
+  try{
+    const sess=localStorage.getItem('usetotem_garcom');
+    if(!sess)return;
+    const {user,pass}=JSON.parse(sess);
+    loading(true);
+    const {getDocs:gd,query:q,collection:col,where:w}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const snap=await gd(q(col(db,'restaurantes'),w('usuarioGarcom','==',user),w('senhaGarcom','==',pass),w('ativo','==',true)));
+    if(!snap.empty){
+      restaurante={id:snap.docs[0].id,...snap.docs[0].data()};
+      document.getElementById('garcomRestName').textContent=restaurante.nome;
+      showPage('garcomPage');
+      startListener();
+    }else{localStorage.removeItem('usetotem_garcom');}
+  }catch(e){}
+  loading(false);
+})();
+
+function startListener(){
+  // escuta pedidos prontos (pronto e garcom_conta) e entregues de hoje
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const q=query(collection(db,'pedidos'),
+    where('restauranteId','==',restaurante.id),
+    where('status','in',['pronto','garcom_conta','entregue']),
+    orderBy('criadoEm'));
+  unsubscribe=onSnapshot(q,snap=>{
+    const pedidos=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const novosCount=pedidos.filter(p=>p.status==='pronto'||p.status==='garcom_conta').length;
+    if(novosCount>pedidosCount&&pedidosCount>=0) playNotif();
+    pedidosCount=novosCount;
+    todosPedidos=pedidos;
+    updateBadges();
+    renderTab();
+  });
+}
+
+function updateBadges(){
+  const prontos=todosPedidos.filter(p=>p.status==='pronto');
+  const contas=todosPedidos.filter(p=>p.status==='garcom_conta');
+  const cE=document.getElementById('countEntregar');
+  const cC=document.getElementById('countContas');
+  if(prontos.length>0){cE.textContent=prontos.length;cE.style.display='inline';}else{cE.style.display='none';}
+  if(contas.length>0){cC.textContent=contas.length;cC.style.display='inline';}else{cC.style.display='none';}
+}
+
+window.switchTab=function(tab){
+  tabAtual=tab;
+  document.querySelectorAll('.garcom-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  renderTab();
+};
+
+function renderTab(){
+  if(tabAtual==='entregar') renderEntregar();
+  else if(tabAtual==='contas') renderContas();
+  else renderEntregues();
+}
+
+function renderEntregar(){
+  const prontos=todosPedidos.filter(p=>p.status==='pronto');
+  const empty=document.getElementById('garcomEmpty');
+  const grid=document.getElementById('ordersGrid');
+  if(!prontos.length){
+    empty.style.display='';grid.style.display='none';
+    document.querySelector('.garcom-empty-icon').textContent='🍽️';
+    document.querySelector('.garcom-empty p').textContent='Nenhum prato pronto no momento.\nAguardando a cozinha...';
+    return;
+  }
+  empty.style.display='none';grid.style.display='';
+  grid.innerHTML=prontos.map(p=>{
+    const ts=p.criadoEm?.toDate?p.criadoEm.toDate():new Date();
+    const mins=Math.floor((Date.now()-ts)/60000);
+    return `<div class="delivery-card pronto" id="dc-${p.id}">
+      <div class="delivery-header pronto">
+        <div>
+          <div class="delivery-mesa">${p.mesa||'Mesa'}</div>
+          <div class="delivery-proto">${p.protocolo||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="delivery-badge pronto">🍽️ PRONTO</span>
+          <span class="delivery-time">${mins===0?'agora':mins+'min'}</span>
+        </div>
+      </div>
+      <div class="delivery-items">
+        ${(p.itens||[]).map(i=>`<div class="delivery-item-row"><span class="delivery-qty">${i.qty}×</span><span style="flex:1">${i.nome}</span><span style="font-size:12px;color:var(--text3)">${fmt(parseFloat(i.preco)*i.qty)}</span></div>`).join('')}
+      </div>
+      <div class="delivery-footer">
+        <div class="delivery-total">${fmt(p.total)}</div>
+        <button class="btn-entregue" onclick="marcarEntregue('${p.id}')">✔ Entregue</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderContas(){
+  const contas=todosPedidos.filter(p=>p.status==='garcom_conta');
+  const empty=document.getElementById('garcomEmpty');
+  const grid=document.getElementById('ordersGrid');
+  if(!contas.length){
+    empty.style.display='';grid.style.display='none';
+    document.querySelector('.garcom-empty-icon').textContent='🧾';
+    document.querySelector('.garcom-empty p').textContent='Nenhuma conta solicitada no momento.';
+    return;
+  }
+  empty.style.display='none';grid.style.display='';
+  grid.innerHTML=contas.map(p=>{
+    const ts=p.criadoEm?.toDate?p.criadoEm.toDate():new Date();
+    const mins=Math.floor((Date.now()-ts)/60000);
+    return `<div class="delivery-card conta" id="dc-${p.id}">
+      <div class="delivery-header conta">
+        <div>
+          <div class="delivery-mesa">${p.mesa||'Mesa'}</div>
+          <div class="delivery-proto">${p.protocolo||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="delivery-badge conta">🧾 CONTA</span>
+          <span class="delivery-time">${mins===0?'agora':mins+'min'}</span>
+        </div>
+      </div>
+      <div class="delivery-items" style="padding:14px 16px">
+        <div style="font-size:15px;font-weight:700;color:var(--amber)">Total: ${fmt(p.total)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">Levar a maquininha para a mesa</div>
+      </div>
+      <div class="delivery-footer">
+        <div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-entregue conta" onclick="marcarContaPaga('${p.id}')">✔ Conta paga</button>
+          <button class="btn-entregue" style="background:#c0574a" onclick="encerrarComandaGarcom('${p.comandaId}','${p.protocolo}')">✕ Encerrar</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderEntregues(){
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const entregues=todosPedidos.filter(p=>{
+    if(p.status!=='entregue'&&p.status!=='conta_paga')return false;
+    const d=p.criadoEm?.toDate?p.criadoEm.toDate():new Date(p.criadoEm||0);
+    return d>=hoje;
+  });
+  const empty=document.getElementById('garcomEmpty');
+  const grid=document.getElementById('ordersGrid');
+  if(!entregues.length){
+    empty.style.display='';grid.style.display='none';
+    document.querySelector('.garcom-empty-icon').textContent='✅';
+    document.querySelector('.garcom-empty p').textContent='Nenhuma entrega ainda hoje.';
+    return;
+  }
+  empty.style.display='none';grid.style.display='';
+  grid.innerHTML=`<div style="grid-column:1/-1">${entregues.map(p=>`
+    <div class="entregue-row">
+      <div class="entregue-info">
+        <div class="entregue-mesa">${p.mesa||'Mesa'} <span class="badge-entregue">${p.status==='conta_paga'?'Conta paga':'Entregue ✅'}</span></div>
+        <div class="entregue-meta">${p.protocolo||''} · ${(p.itens||[]).reduce((s,i)=>s+i.qty,0)} item(s)</div>
+      </div>
+      <div class="entregue-val">${fmt(p.total)}</div>
+    </div>`).join('')}</div>`;
+}
+
+window.marcarEntregue=async function(id){
+  try{
+    await updateDoc(doc(db,'pedidos',id),{status:'entregue'});
+    showToast('Pedido entregue! ✅');
+  }catch(e){showToast('Erro: '+e.message);}
+};
+
+window.marcarContaPaga=async function(id){
+  try{
+    await updateDoc(doc(db,'pedidos',id),{status:'conta_paga'});
+    showToast('Conta paga! ✅');
+  }catch(e){showToast('Erro: '+e.message);}
+};
+
+window.encerrarComandaGarcom=async function(comandaId,protocolo){
+  if(!comandaId){showToast('Comanda não encontrada.');return;}
+  if(!confirm(`Encerrar comanda ${protocolo}?\n\nConfirme após receber o pagamento.`))return;
+  try{
+    await updateDoc(doc(db,'comandas',comandaId),{status:'encerrada',encerradoEm:new Date()});
+    showToast(`Comanda ${protocolo} encerrada! ✅`);
+  }catch(e){showToast('Erro: '+e.message);}
+};
+</script>
+</body>
+</html>
